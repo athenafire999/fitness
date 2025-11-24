@@ -1,0 +1,20 @@
+{
+  "name": "tts-server",
+  "version": "1.0.0",
+  "description": "TTS Server for Workout Generator",
+  "main": "tts-server.js",
+  "scripts": {
+    "start": "node tts-server.js"
+  },
+  "keywords": ["tts", "text-to-speech"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

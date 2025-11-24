@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Workout Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+</head>
+
+<body class="rounded-box container">
+    <div id="workout-generator" class="card">
+        <!-- Video Placeholder -->
+        <div class="video-container rounded">
+            <video class="rounded" controls>
+                <source src="warm_up.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        <div class="form-group">
+            <label for="workout-type">Workout Type:</label>
+            <select id="workout-type" class="small-dropdown">
+                <option value="Full Body">Full Body</option>
+                <option value="Abs">Abs</option>
+                <option value="Arms">Arms</option>
+                <option value="Legs">Legs</option>
+                <option value="customize">Customize</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="difficulty">Difficulty:</label>
+            <select id="difficulty" class="small-dropdown">
+                <option value="easy">20 Minutes</option>
+                <option value="medium">30 Minutes</option>
+                <option value="hard">40 Minutes</option>
+            </select>
+        </div>
+
+        <div class="music-selection form-group">
+            <label for="music-selection">Choose Music:</label>
+            <div class="music-selection-row">
+                <select id="music-selection">
+                    <option value="">No Music</option>
+                    <option value="popular-mix">Popular Mix</option>
+                    <option value="hiphop">Hip-Hop</option>
+                    <option value="house">House Music</option>
+                </select>
+                <button id="test-audio-btn" class="button button-inline">Test</button>
+            </div>
+        </div>
+
+        <!-- Custom Exercise Selection (hidden by default) -->
+        <div id="custom-exercise-selection" class="custom-exercise-selection hidden">
+            <h3>Select Your Exercises</h3>
+            <div id="exercise-limit-info" class="exercise-limit-info">
+                <!-- Exercise limit will be populated by JavaScript -->
+            </div>
+
+            <!-- Add Custom Exercise Input -->
+            <div class="add-custom-exercise">
+                <h4>Add Your Own Exercise:</h4>
+                <div class="add-exercise-row">
+                    <input type="text" id="custom-exercise-input" placeholder="Enter exercise name..." class="custom-exercise-input">
+                    <button id="add-custom-exercise-btn" class="button button-inline button-primary">Add</button>
+                </div>
+            </div>
+
+            <div id="exercise-checkboxes" class="exercise-grid">
+                <!-- Exercise checkboxes will be populated by JavaScript -->
+            </div>
+            <div class="custom-controls">
+                <button id="select-all-exercises" class="button button-inline button-success">Select All</button>
+                <button id="clear-all-exercises" class="button button-inline button-danger">Clear All</button>
+            </div>
+            <div id="exercise-count" class="exercise-count">Selected: 0 exercises</div>
+        </div>
+
+        <div class="tts-controls">
+            <label for="tts-enabled">Voice Guidance:</label>
+            <div class="tts-checkbox-row">
+                <input type="checkbox" id="tts-enabled" checked class="tts-checkbox">
+                <span class="tts-checkbox-label">Enable voice instructions</span>
+            </div>
+
+            <div class="voice-selection">
+                <label for="voice-select">Choose Voice:</label>
+                <select id="voice-select" class="small-dropdown">
+                    <option value="Female">Libby Voice (Microsoft)</option>
+                    <option value="Male">Alex Voice (Microsoft)</option>
+                </select>
+            </div>
+            <div id="tts-status" class="tts-status">Checking browser TTS...</div>
+        </div>
+
+        <button id="create-workout-button" class="button black-button button-large">Create Workout</button>
+    </div>
+
+    <div id="workout-display" class="card hidden">
+        <div class="timer-container hidden">
+            <div id="timer" class="timer">Total: 0:00</div>
+            <div id="round-timer" class="timer">Round: 0:00</div>
+        </div>
+
+        <div id="current-round-info" class="current-round-info"></div>
+
+        <ul id="workout-list"></ul>
+
+        <div class="buttons-container">
+            <div class="button-row">
+                <button id="start-workout-button" class="button black-button hidden">Start Workout</button>
+                <button id="regenerate-workout-button" class="button hidden">Regenerate</button>
+            </div>
+
+            <div class="button-row hidden" id="active-controls">
+                <div class="music-controls">
+                    <button id="music-play-pause" class="button button-icon">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button id="music-stop" class="button button-icon">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                    <button id="music-rewind" class="button button-icon">
+                        <i class="fas fa-backward"></i>
+                    </button>
+                    <div class="volume-control">
+                        <i class="fas fa-volume-up volume-icon"></i>
+                        <input type="range" id="music-volume" min="0" max="100" value="70" class="volume-slider">
+                    </div>
+                </div>
+                <div class="next-round-slider-container">
+                    <div class="slider-label">Slide to Next Round</div>
+                    <div class="slider-wrapper">
+                        <input type="range" id="next-round-slider" min="0" max="100" value="0" class="next-round-slider">
+                        <div class="slider-track">
+                            <div class="slider-fill" id="slider-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="finish-workout-button" class="button black-button hidden">Finish Workout</button>
+            <button id="restart-workout-button" class="button hidden">Restart Workout</button>
+        </div>
+    </div>
+
+    <!-- Workout Statistics Display -->
+    <div id="workout-stats" class="card hidden">
+        <h2 class="stats-title">🎉 Workout Complete!</h2>
+
+        <div id="total-reps-display" class="total-reps-display">
+            <!-- Total reps will be inserted here -->
+        </div>
+
+        <div id="stats-summary" class="stats-summary">
+            <h3>Total Reps per Exercise</h3>
+            <!-- Total reps per exercise will be inserted here -->
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">Round Completion Times</h3>
+            <canvas id="round-times-chart" class="chart-canvas"></canvas>
+        </div>
+
+        <button id="close-stats-button" class="button black-button">Close</button>
+    </div>
+
+    <audio id="music-player"></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js?v=4"></script>
+
+</body>
+
+</html>
