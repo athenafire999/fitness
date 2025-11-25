@@ -330,6 +330,8 @@ document.addEventListener('DOMContentLoaded', function () {
         generateWorkout();
         document.getElementById('start-workout-button').classList.remove('hidden');
         document.querySelector('.timer-container').classList.add('hidden');
+        document.getElementById('progress-bar').classList.add('hidden');
+        updateProgressBar(); // Reset progress
     });
 
     document.getElementById('start-workout-button').addEventListener('click', async function () {
@@ -339,6 +341,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('active-controls').classList.remove('hidden');
         document.getElementById('regenerate-workout-button').classList.add('hidden');
         document.querySelector('.timer-container').classList.remove('hidden');
+        document.getElementById('progress-bar').classList.remove('hidden');
+        updateProgressBar();
         playMusic();
         announceWorkoutStart();
 
@@ -358,20 +362,32 @@ document.addEventListener('DOMContentLoaded', function () {
         // When slider reaches 100%, move to next round
         if (value >= 100 && !isSliding) {
             isSliding = true;
-            nextRound(); // Proceed to the next round
-            // Announce round start and then exercises (same format as first round)
-            announceNextRound(currentRound);
-            // Announce exercises after round start announcement
+            
+            // Store the completed round number before nextRound() increments it
+            const completedRound = currentRound;
+            
+            // Announce the round is complete (before moving to next round)
+            if (completedRound > 0) {
+                announceRoundComplete(completedRound);
+            }
+            
+            // Wait a moment, then proceed to next round
             setTimeout(() => {
-                announceAllExercisesInRound();
-            }, 2000); // 2 second delay to let round announcement finish first
+                nextRound(); // Proceed to the next round (this increments currentRound)
+                // Announce round start and then exercises (same format as first round)
+                announceNextRound(currentRound);
+                // Announce exercises after round start announcement
+                setTimeout(() => {
+                    announceAllExercisesInRound();
+                }, 2000); // 2 second delay to let round announcement finish first
+            }, 1500); // 1.5 second delay to let round complete announcement finish
 
             // Reset slider after a short delay
             setTimeout(() => {
                 this.value = 0;
                 sliderFill.style.width = '0%';
                 isSliding = false;
-            }, 500);
+            }, 2000);
 
             // Show finish button if on last round
             if (currentRound === totalRounds) {
@@ -419,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
         stopTimer();
         clearInterval(roundTimerInterval);
         stopMusic();
+        stopTTS();
         playCompletionSound();
         announceWorkoutComplete();
 
@@ -447,8 +464,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('finish-workout-button').classList.add('hidden');
         document.getElementById('restart-workout-button').classList.add('hidden');
 
-        // Hide timers
+        // Hide timers and progress bar
         document.querySelector('.timer-container').classList.add('hidden');
+        document.getElementById('progress-bar').classList.add('hidden');
+
+        // Reset progress bar
+        updateProgressBar();
 
         // Stop any ongoing timers and music
         stopTimer();
@@ -586,6 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('round-timer').classList.remove('red');
 
         updateExerciseReps();
+        updateProgressBar();
         if (currentRound > 1) {
             clearInterval(roundTimerInterval);
         }
@@ -607,13 +629,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function startRoundTimer() {
         let roundSeconds = 0;
-        let hasPlayedOneMinuteSound = false;
-        let hasPlayed2MinSound = false;
-        let hasPlayed3MinSound = false;
-        const oneMinuteSound = new Audio('1minSound.mp3');
-        const twoMinuteSound = new Audio('2minSound.mp3');
-        const threeMinuteSound = new Audio('3minSound.mp3');
-        let audioPlayer = document.getElementById('music-player');
+        let hasPlayedBellSound = false;
 
         roundTimerInterval = setInterval(() => {
             if (isPaused) {
@@ -622,39 +638,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             roundSeconds++;
 
-            if (roundSeconds === 60 && !hasPlayedOneMinuteSound) {
-                oneMinuteSound.play();
-                hasPlayedOneMinuteSound = true;
-            }
-
-            if (roundSeconds === 120 && !hasPlayed2MinSound) {
-                if (audioPlayer && !audioPlayer.paused) {
-                    audioPlayer.pause();
-                    twoMinuteSound.play().then(() => {
-                        twoMinuteSound.addEventListener('ended', () => {
-                            audioPlayer.play();
-                        }, { once: true });
-                    });
-                } else {
-                    twoMinuteSound.play();
-                }
-                hasPlayed2MinSound = true;
-            }
-
-            if (roundSeconds === 180 && !hasPlayed3MinSound) {
-                if (audioPlayer && !audioPlayer.paused) {
-                    audioPlayer.pause();
-                    threeMinuteSound.play().then(() => {
-                        threeMinuteSound.addEventListener('ended', () => {
-                            audioPlayer.play();
-                        }, { once: true });
-                    });
-                } else {
-                    threeMinuteSound.play();
-                }
-                hasPlayed3MinSound = true;
+            if (roundSeconds === 180 && !hasPlayedBellSound) {
                 document.getElementById('round-timer').classList.add('red');
-                announceTimeWarning();
+                playBellSound();
+                hasPlayedBellSound = true;
             }
 
             document.getElementById('round-timer').textContent = `Round: ${formatTime(roundSeconds * 1000)}`;
@@ -770,46 +757,6 @@ document.addEventListener('DOMContentLoaded', function () {
         manageMusic(musicChoice);
     });
 
-    document.getElementById('test-audio-btn').addEventListener('click', function () {
-        console.log('=== TEST AUDIO BUTTON CLICKED ===');
-        const musicChoice = document.getElementById('music-selection').value;
-        console.log('Music choice:', musicChoice);
-
-        if (!musicChoice) {
-            alert("Please select a music track first.");
-            return;
-        }
-
-        manageMusic(musicChoice);
-        const audioPlayer = document.getElementById('music-player');
-
-        console.log('Audio player element:', audioPlayer);
-        console.log('Audio player src:', audioPlayer ? audioPlayer.src : 'NO ELEMENT');
-        console.log('Audio player volume:', audioPlayer ? audioPlayer.volume : 'NO ELEMENT');
-
-        if (audioPlayer && audioPlayer.src) {
-            audioPlayer.currentTime = 0;
-            console.log('Attempting to play audio...');
-
-            audioPlayer.play()
-                .then(() => {
-                    console.log("✅ Test audio playing successfully!");
-                    alert("Audio is playing! If you can't hear it, check your system volume.");
-                    setTimeout(() => {
-                        audioPlayer.pause();
-                        audioPlayer.currentTime = 0;
-                        console.log("Test audio stopped");
-                    }, 5000); // Play for 5 seconds
-                })
-                .catch(e => {
-                    console.error("❌ Audio playback failed:", e);
-                    alert("Audio playback failed: " + e.message + "\n\nCheck browser console (F12) for details.");
-                });
-        } else {
-            console.error('❌ Audio player not ready. Element:', audioPlayer, 'Src:', audioPlayer?.src);
-            alert("Audio not loaded. Please select music again.");
-        }
-    });
 
     function manageMusic(musicChoice) {
         console.log('=== MANAGE MUSIC CALLED ===');
@@ -883,6 +830,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function processSpeechQueue() {
+        // Only process if not currently speaking and queue has items
         if (isSpeaking || speechQueue.length === 0) {
             return;
         }
@@ -896,7 +844,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('TTS: Backend speech completed');
             isSpeaking = false;
             resolve();
-            setTimeout(processSpeechQueue, 100);
+            // Process next item in queue after a small delay
+            setTimeout(() => {
+                processSpeechQueue();
+            }, 200);
         } catch (backendError) {
             console.warn('TTS: Backend failed, falling back to browser TTS:', backendError);
 
@@ -906,12 +857,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('TTS: Browser speech completed');
                 isSpeaking = false;
                 resolve();
-                setTimeout(processSpeechQueue, 100);
+                // Process next item in queue after a small delay
+                setTimeout(() => {
+                    processSpeechQueue();
+                }, 200);
             } catch (browserError) {
                 console.error('TTS: All methods failed:', browserError);
                 isSpeaking = false;
                 reject(browserError);
-                setTimeout(processSpeechQueue, 100);
+                // Continue processing queue even on error
+                setTimeout(() => {
+                    processSpeechQueue();
+                }, 200);
             }
         }
     }
@@ -983,8 +940,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             console.log('Speech synthesis available');
-            speechSynthesis.cancel();
+            // Don't cancel - the queue ensures only one speech at a time
+            // Only cancel if we're explicitly stopping (handled by stopTTS)
             const utterance = new SpeechSynthesisUtterance(text);
+            
+            // Store reference to current utterance for potential cleanup
+            let utteranceRef = utterance;
 
             // Settings
             utterance.rate = options.rate || 0.95;
@@ -1025,21 +986,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
             utterance.onend = () => {
                 console.log('✅ TTS completed');
+                utteranceRef = null;
                 resolve();
             };
 
             utterance.onerror = (e) => {
                 console.error('❌ TTS error:', e);
+                utteranceRef = null;
+                // If interrupted, it means something else canceled it (like stopTTS)
+                // In that case, we should reject so the queue knows it didn't complete
                 if (e.error === 'interrupted') {
-                    console.log('TTS interrupted (normal)');
-                    resolve();
+                    console.log('TTS interrupted - likely by explicit stopTTS call');
+                    reject(new Error('Speech interrupted'));
                 } else {
                     reject(e);
                 }
             };
 
-            console.log('Starting speech...');
-            speechSynthesis.speak(utterance);
+            // Check if speech synthesis is already speaking
+            // This shouldn't happen with proper queueing, but add a safety check
+            if (speechSynthesis.speaking) {
+                console.log('⚠️ Warning: Speech synthesis is already speaking (queue should prevent this)');
+                // Wait a bit and try again - queue should handle this but add safety
+                const checkInterval = setInterval(() => {
+                    if (!speechSynthesis.speaking) {
+                        clearInterval(checkInterval);
+                        console.log('Starting speech after wait...');
+                        speechSynthesis.speak(utterance);
+                    }
+                }, 100);
+                
+                // Timeout after 5 seconds to prevent infinite wait
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    if (!speechSynthesis.speaking) {
+                        console.log('Starting speech after timeout...');
+                        speechSynthesis.speak(utterance);
+                    }
+                }, 5000);
+            } else {
+                console.log('Starting speech...');
+                speechSynthesis.speak(utterance);
+            }
         });
     }
 
@@ -1243,8 +1231,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         isAnnouncing = true;
 
-        // Stop any current speech before starting new announcements
-        stopTTS();
+        // Don't stop current speech - let the queue handle it naturally
+        // This ensures each speech finishes before the next starts
 
         // Original BD2 timing calculations
         const REP_DURATION_MS = 2630; // 2.63 seconds per rep (from original BD2)
@@ -1307,19 +1295,11 @@ document.addEventListener('DOMContentLoaded', function () {
             // Add time for this exercise plus gap
             cumulativeTime += exerciseDuration + EXERCISE_GAP_MS;
 
-            // Announce round completion (like original BD2)
+            // Reset announcement flag after last exercise (no round complete announcement here)
             if (isLastExercise) {
                 setTimeout(() => {
-                    speakText(`Round ${currentRound} complete!`, {
-                        rate: 0.95,
-                        pitch: 0,
-                        volume: 0.7,
-                        lang: 'en-GB'
-                    });
                     // Reset announcement flag after completion
-                    setTimeout(() => {
-                        isAnnouncing = false;
-                    }, 1000);
+                    isAnnouncing = false;
                 }, cumulativeTime - EXERCISE_GAP_MS + 1000);
             }
         });
@@ -1336,15 +1316,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function announceTimeWarning() {
+    function announceRoundComplete(roundNumber) {
         if (document.getElementById('tts-enabled').checked) {
-            speakText("Three minutes remaining. Push through!", {
+            speakText(`Round ${roundNumber} complete!`, {
                 rate: 0.95,
                 pitch: 0,
-                volume: 0.8,
+                volume: 0.7,
                 lang: 'en-GB'
             });
         }
+    }
+
+    function playBellSound() {
+        const bellSound = new Audio('bell-98033.mp3');
+        bellSound.play().catch(e => {
+            console.error("Failed to play bell sound:", e);
+        });
     }
 
     // TTS Controls - stopTTS function is defined above
@@ -1368,6 +1355,24 @@ document.addEventListener('DOMContentLoaded', function () {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes}m ${seconds}s`;
+    }
+
+    // Update Progress Bar - Light up circles as rounds complete
+    function updateProgressBar() {
+        const circles = document.querySelectorAll('.progress-circle');
+        circles.forEach((circle, index) => {
+            const roundNumber = index + 1;
+            circle.classList.remove('completed', 'active');
+            
+            if (roundNumber < currentRound) {
+                // Past rounds - green (completed)
+                circle.classList.add('completed');
+            } else if (roundNumber === currentRound) {
+                // Current round - active (blue with pulse)
+                circle.classList.add('active');
+            }
+            // Future rounds remain default (gray)
+        });
     }
 
     function playMusic() {
@@ -1441,9 +1446,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Music Selection and Test Button
+    // Music Selection
     const musicSelection = document.getElementById('music-selection');
-    const testAudioBtn = document.getElementById('test-audio-btn');
 
     // Music file mapping
     const musicFiles = {
@@ -1451,6 +1455,27 @@ document.addEventListener('DOMContentLoaded', function () {
         'hiphop': 'hop.mp3',
         'house': 'house.mp3'
     };
+
+    // Track display names
+    const trackNames = {
+        'popular-mix': 'Popular',
+        'hiphop': 'Hip-Hop',
+        'house': 'House',
+        '': 'No Music'
+    };
+
+    // Array of music options for cycling
+    const musicOptions = ['popular-mix', 'hiphop', 'house', ''];
+    
+    // Function to update change track button text
+    function updateChangeTrackButton() {
+        const changeTrackBtn = document.getElementById('music-change-track');
+        if (changeTrackBtn) {
+            const currentTrack = musicSelection ? musicSelection.value : '';
+            const trackName = trackNames[currentTrack] || 'No Music';
+            changeTrackBtn.innerHTML = `<i class="fas fa-music"></i> <span class="track-name">${trackName}</span>`;
+        }
+    }
 
     if (musicSelection) {
         musicSelection.onchange = function () {
@@ -1462,28 +1487,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 audioPlayer.src = '';
                 console.log('No music selected');
             }
+            // Update change track button to show current track
+            updateChangeTrackButton();
         };
+        
+        // Initialize button text on page load
+        updateChangeTrackButton();
     }
 
-    if (testAudioBtn) {
-        testAudioBtn.onclick = function () {
-            if (audioPlayer && audioPlayer.src) {
-                if (audioPlayer.paused) {
-                    audioPlayer.play().then(() => {
-                        console.log('Test audio playing');
-                        testAudioBtn.textContent = 'Stop';
-                    }).catch(e => {
-                        console.error('Failed to play test audio:', e);
-                    });
-                } else {
-                    audioPlayer.pause();
-                    audioPlayer.currentTime = 0;
-                    testAudioBtn.textContent = 'Test';
-                }
+    // Change Track Button - Cycles through available tracks
+    const changeTrackBtn = document.getElementById('music-change-track');
+    if (changeTrackBtn) {
+        changeTrackBtn.addEventListener('click', function () {
+            const currentTrack = musicSelection.value;
+            const currentIndex = musicOptions.indexOf(currentTrack);
+            
+            // Find next track (cycle through)
+            let nextIndex = (currentIndex + 1) % musicOptions.length;
+            const nextTrack = musicOptions[nextIndex];
+            
+            // Update selection
+            musicSelection.value = nextTrack;
+            
+            // Trigger change event to load new track (this will also update button text)
+            if (musicSelection.onchange) {
+                musicSelection.onchange();
             } else {
-                alert('Please select a music option first');
+                // Fallback if onchange not set
+                const event = new Event('change');
+                musicSelection.dispatchEvent(event);
+                updateChangeTrackButton();
             }
-        }
+            
+            // If music is playing, restart with new track
+            if (audioPlayer && !audioPlayer.paused) {
+                audioPlayer.currentTime = 0;
+                audioPlayer.play().catch(e => {
+                    console.error('Failed to play new track:', e);
+                });
+            } else if (audioPlayer && audioPlayer.src) {
+                // If paused, just load the new track
+                audioPlayer.currentTime = 0;
+            }
+            
+            console.log('Changed track to:', nextTrack || 'No Music');
+        });
     }
 
     // Workout Statistics Display Functions

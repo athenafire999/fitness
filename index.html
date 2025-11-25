@@ -11,7 +11,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
 </head>
@@ -53,7 +53,6 @@
                     <option value="hiphop">Hip-Hop</option>
                     <option value="house">House Music</option>
                 </select>
-                <button id="test-audio-btn" class="button button-inline">Test</button>
             </div>
         </div>
 
@@ -111,6 +110,22 @@
 
         <div id="current-round-info" class="current-round-info"></div>
 
+        <!-- Progress Bar - 10 Circles -->
+        <div id="progress-bar" class="progress-bar hidden">
+            <div class="progress-circles">
+                <div class="progress-circle" data-round="1"></div>
+                <div class="progress-circle" data-round="2"></div>
+                <div class="progress-circle" data-round="3"></div>
+                <div class="progress-circle" data-round="4"></div>
+                <div class="progress-circle" data-round="5"></div>
+                <div class="progress-circle" data-round="6"></div>
+                <div class="progress-circle" data-round="7"></div>
+                <div class="progress-circle" data-round="8"></div>
+                <div class="progress-circle" data-round="9"></div>
+                <div class="progress-circle" data-round="10"></div>
+            </div>
+        </div>
+
         <ul id="workout-list"></ul>
 
         <div class="buttons-container">
@@ -129,6 +144,9 @@
                     </button>
                     <button id="music-rewind" class="button button-icon">
                         <i class="fas fa-backward"></i>
+                    </button>
+                    <button id="music-change-track" class="button button-icon" title="Change Track">
+                        <i class="fas fa-music"></i>
                     </button>
                     <div class="volume-control">
                         <i class="fas fa-volume-up volume-icon"></i>
