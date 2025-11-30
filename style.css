@@ -132,7 +132,7 @@ body {
 @media (max-width: 768px) {
     #workout-display {
         max-width: calc(100% - 8px);
-        padding: 12px;
+        padding: 6px;
         margin-bottom: 4px;
         max-height: calc(100vh - 8px);
         max-height: calc(100dvh - 8px);
@@ -639,44 +639,45 @@ video {
     }
 
     .timer-container {
-        gap: 4px;
-        margin: 3px 0;
+        gap: 3px;
+        margin: 2px 0;
         flex-shrink: 0;
     }
 
     .timer {
-        padding: 6px 8px;
-        font-size: 0.9rem;
-        min-height: 32px;
-        border-radius: 12px;
+        padding: 4px 6px;
+        font-size: 0.75rem;
+        min-height: 26px;
+        border-radius: 8px;
+        border-width: 1px;
     }
 
     .number-badge {
-        width: 50px;
-        height: 50px;
-        font-size: 1.6rem;
-        margin-bottom: 6px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.3rem;
+        margin-bottom: 4px;
     }
 
     .number-badge.reps {
-        font-size: 1.4rem;
+        font-size: 1.1rem;
     }
 
     #workout-list {
-        gap: 6px;
+        gap: 4px;
         flex-shrink: 1;
         min-height: 0;
-        margin: 4px 0;
+        margin: 2px 0;
     }
 
     #workout-list li {
-        padding: 10px;
+        padding: 6px;
         min-height: 0;
         max-height: none;
     }
 
     #workout-list span {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
     }
 
     .exercise-grid {
@@ -842,27 +843,27 @@ video {
     }
 
     .current-round-info {
-        margin-bottom: 3px;
-    }
-
-    .current-round-info h3 {
-        font-size: 0.75rem;
         margin-bottom: 2px;
     }
 
+    .current-round-info h3 {
+        font-size: 0.65rem;
+        margin-bottom: 1px;
+    }
+
     .progress-bar {
-        margin: 3px 0;
-        padding: 4px;
+        margin: 2px 0;
+        padding: 2px;
     }
 
     .progress-circles {
-        gap: 4px;
+        gap: 3px;
     }
 
     .progress-circle {
-        width: 20px;
-        height: 20px;
-        font-size: 0.6rem;
+        width: 16px;
+        height: 16px;
+        font-size: 0.5rem;
         border-width: 1px;
     }
 
@@ -872,15 +873,15 @@ video {
     }
     
     .button {
-        padding: 6px 10px;
-        font-size: 0.75rem;
-        margin-top: 3px;
+        padding: 4px 8px;
+        font-size: 0.7rem;
+        margin-top: 2px;
     }
 
     .button-icon {
-        min-height: 28px;
-        padding: 6px 8px;
-        font-size: 0.7rem;
+        min-height: 24px;
+        padding: 4px 6px;
+        font-size: 0.65rem;
     }
 
     .music-controls {
@@ -896,21 +897,21 @@ video {
     }
 
     .slider-wrapper {
-        height: 40px;
+        height: 32px;
     }
 
     .next-round-slider {
-        height: 40px;
+        height: 32px;
     }
 
     .next-round-slider::-webkit-slider-thumb {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
     }
 
     .next-round-slider::-moz-range-thumb {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
     }
     
     #workout-list {
@@ -1036,23 +1037,53 @@ video {
     }
 
     #workout-list {
-        gap: 8px;
-    }
-
-    #workout-list {
+        gap: 3px;
         flex-shrink: 1;
         min-height: 0;
-        overflow-y: auto;
+        margin: 2px 0;
     }
 
     #workout-list li {
-        padding: 12px;
-        min-height: 120px;
-        max-height: 150px;
+        padding: 5px;
+        min-height: 0;
+        max-height: none;
     }
 
     #workout-list span {
+        font-size: 0.75rem;
+    }
+
+    .number-badge {
+        width: 35px;
+        height: 35px;
+        font-size: 1.1rem;
+        margin-bottom: 3px;
+    }
+
+    .number-badge.reps {
         font-size: 0.95rem;
+    }
+
+    .timer {
+        padding: 3px 5px;
+        font-size: 0.7rem;
+        min-height: 24px;
+    }
+
+    .timer-container {
+        gap: 2px;
+        margin: 2px 0;
+    }
+
+    .current-round-info h3 {
+        font-size: 0.6rem;
+        margin-bottom: 1px;
+    }
+
+    .button {
+        padding: 3px 6px;
+        font-size: 0.65rem;
+        margin-top: 2px;
     }
 
     .exercise-grid {
@@ -1364,26 +1395,8 @@ video {
 
 @media (max-width: 768px) {
     .progress-bar {
-        margin: 3px 0;
-        padding: 4px;
-    }
-
-    .progress-circles {
-        gap: 4px;
-    }
-
-    .progress-circle {
-        width: 20px;
-        height: 20px;
-        font-size: 0.6rem;
-        border-width: 1px;
-    }
-}
-
-@media (max-width: 480px) {
-    .progress-bar {
         margin: 2px 0;
-        padding: 3px;
+        padding: 2px;
     }
 
     .progress-circles {
@@ -1391,9 +1404,27 @@ video {
     }
 
     .progress-circle {
-        width: 18px;
-        height: 18px;
-        font-size: 0.55rem;
+        width: 16px;
+        height: 16px;
+        font-size: 0.5rem;
+        border-width: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-bar {
+        margin: 2px 0;
+        padding: 2px;
+    }
+
+    .progress-circles {
+        gap: 2px;
+    }
+
+    .progress-circle {
+        width: 14px;
+        height: 14px;
+        font-size: 0.45rem;
         border-width: 1px;
     }
 }
