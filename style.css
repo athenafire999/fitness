@@ -755,14 +755,17 @@ video {
     }
 
     .music-controls {
-        flex-direction: column;
-        gap: 6px;
+        flex-direction: row;
+        gap: 4px;
         width: 100%;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
     .volume-control {
-        width: 100%;
-        min-width: 100%;
+        width: auto;
+        min-width: 80px;
+        flex: 1;
     }
 
     .next-round-slider-container {
@@ -886,10 +889,14 @@ video {
 
     .music-controls {
         gap: 4px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
     .volume-control {
-        min-width: 100px;
+        min-width: 80px;
+        flex: 1;
     }
 
     .next-round-slider-container {
