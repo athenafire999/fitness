@@ -371,15 +371,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 announceRoundComplete(completedRound);
             }
             
+            // Check if this is the last round before proceeding
+            const isLastRound = completedRound === totalRounds;
+            
             // Wait a moment, then proceed to next round
             setTimeout(() => {
-                nextRound(); // Proceed to the next round (this increments currentRound)
-                // Announce round start and then exercises (same format as first round)
-                announceNextRound(currentRound);
-                // Announce exercises after round start announcement
-                setTimeout(() => {
-                    announceAllExercisesInRound();
-                }, 2000); // 2 second delay to let round announcement finish first
+                if (!isLastRound) {
+                    nextRound(); // Proceed to the next round (this increments currentRound)
+                    // Announce round start and then exercises (same format as first round)
+                    announceNextRound(currentRound);
+                    // Announce exercises after round start announcement
+                    setTimeout(() => {
+                        announceAllExercisesInRound();
+                    }, 2000); // 2 second delay to let round announcement finish first
+                } else {
+                    // Last round completed, show finish button
+                    document.getElementById('active-controls').classList.add('hidden');
+                    document.getElementById('finish-workout-button').classList.remove('hidden');
+                }
             }, 1500); // 1.5 second delay to let round complete announcement finish
 
             // Reset slider after a short delay
@@ -388,12 +397,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 sliderFill.style.width = '0%';
                 isSliding = false;
             }, 2000);
-
-            // Show finish button if on last round
-            if (currentRound === totalRounds) {
-                document.getElementById('active-controls').classList.add('hidden');
-                document.getElementById('finish-workout-button').classList.remove('hidden');
-            }
         }
     });
 

@@ -104,6 +104,58 @@ body {
     box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
 
+/* Workout Display Card - Slightly smaller than container */
+#workout-display {
+    max-width: calc(100% - 20px);
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px;
+}
+
+/* Workout Generator Card - Slightly smaller than container on mobile */
+@media (max-width: 768px) {
+    #workout-generator {
+        max-width: calc(100% - 8px);
+        margin-left: auto;
+        margin-right: auto;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    #workout-generator {
+        max-width: calc(100% - 6px);
+        padding: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    #workout-display {
+        max-width: calc(100% - 8px);
+        padding: 12px;
+        margin-bottom: 4px;
+        max-height: calc(100vh - 8px);
+        max-height: calc(100dvh - 8px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    #workout-display .buttons-container {
+        margin-top: auto;
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    #workout-display {
+        max-width: calc(100% - 6px);
+        padding: 10px;
+        margin-bottom: 3px;
+    }
+}
+
 @media (min-width: 900px) {
     #workout-generator {
         display: grid;
@@ -304,15 +356,15 @@ video {
 }
 
 .number-badge {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: 'Outfit', sans-serif;
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 800;
     color: white;
     margin-bottom: 10px;
@@ -322,11 +374,11 @@ video {
 
 .number-badge.reps {
     background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
-    font-size: 1.6rem;
+    font-size: 1.5rem;
 }
 
 #workout-list span {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1.4;
     color: var(--text-light);
@@ -335,7 +387,8 @@ video {
 .timer-container {
     display: flex;
     gap: 15px;
-    margin: 15px 0;
+    margin: 12px 0;
+    flex-shrink: 0;
 }
 
 .timer {
@@ -479,9 +532,10 @@ video {
         border-radius: 16px;
     }
 
-    #workout-list {
+    /* Keep exercises in 2 columns on mobile */
+    /* #workout-list {
         grid-template-columns: 1fr;
-    }
+    } */
 
     .timer-container {
         flex-direction: column;
@@ -577,40 +631,52 @@ video {
     }
 
     .timer {
-        padding: 12px 14px;
-        font-size: 1.2rem;
-        min-height: 44px;
-        border-radius: 16px;
-        border-width: 2px;
+        padding: 6px 8px;
+        font-size: 0.9rem;
+        min-height: 32px;
+        border-radius: 12px;
+        border-width: 1px;
     }
 
     .timer-container {
-        gap: 6px;
-        margin: 6px 0;
+        gap: 4px;
+        margin: 3px 0;
         flex-shrink: 0;
     }
 
+    .timer {
+        padding: 6px 8px;
+        font-size: 0.9rem;
+        min-height: 32px;
+        border-radius: 12px;
+    }
+
     .number-badge {
-        width: 40px;
-        height: 40px;
-        font-size: 1.3rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.6rem;
         margin-bottom: 6px;
     }
 
     .number-badge.reps {
-        font-size: 1.1rem;
+        font-size: 1.4rem;
     }
 
     #workout-list {
         gap: 6px;
+        flex-shrink: 1;
+        min-height: 0;
+        margin: 4px 0;
     }
 
     #workout-list li {
-        padding: 8px;
+        padding: 10px;
+        min-height: 0;
+        max-height: none;
     }
 
     #workout-list span {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
 
     .exercise-grid {
@@ -776,16 +842,80 @@ video {
     }
 
     .current-round-info {
-        margin-bottom: 6px;
+        margin-bottom: 3px;
     }
 
     .current-round-info h3 {
-        font-size: 0.95rem;
-        margin-bottom: 4px;
+        font-size: 0.75rem;
+        margin-bottom: 2px;
+    }
+
+    .progress-bar {
+        margin: 3px 0;
+        padding: 4px;
+    }
+
+    .progress-circles {
+        gap: 4px;
+    }
+
+    .progress-circle {
+        width: 20px;
+        height: 20px;
+        font-size: 0.6rem;
+        border-width: 1px;
     }
 
     .buttons-container {
-        margin-top: 6px;
+        margin-top: auto;
+        flex-shrink: 0;
+    }
+    
+    .button {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+        margin-top: 3px;
+    }
+
+    .button-icon {
+        min-height: 28px;
+        padding: 6px 8px;
+        font-size: 0.7rem;
+    }
+
+    .music-controls {
+        gap: 4px;
+    }
+
+    .volume-control {
+        min-width: 100px;
+    }
+
+    .next-round-slider-container {
+        min-width: 150px;
+    }
+
+    .slider-wrapper {
+        height: 40px;
+    }
+
+    .next-round-slider {
+        height: 40px;
+    }
+
+    .next-round-slider::-webkit-slider-thumb {
+        width: 40px;
+        height: 40px;
+    }
+
+    .next-round-slider::-moz-range-thumb {
+        width: 40px;
+        height: 40px;
+    }
+    
+    #workout-list {
+        flex-shrink: 1;
+        min-height: 0;
     }
 
     .button-row {
@@ -895,26 +1025,34 @@ video {
     }
 
     .number-badge {
-        width: 35px;
-        height: 35px;
-        font-size: 1.1rem;
-        margin-bottom: 4px;
+        width: 55px;
+        height: 55px;
+        font-size: 1.7rem;
+        margin-bottom: 8px;
     }
 
     .number-badge.reps {
-        font-size: 0.95rem;
+        font-size: 1.4rem;
     }
 
     #workout-list {
-        gap: 4px;
+        gap: 8px;
+    }
+
+    #workout-list {
+        flex-shrink: 1;
+        min-height: 0;
+        overflow-y: auto;
     }
 
     #workout-list li {
-        padding: 6px;
+        padding: 12px;
+        min-height: 120px;
+        max-height: 150px;
     }
 
     #workout-list span {
-        font-size: 0.75rem;
+        font-size: 0.95rem;
     }
 
     .exercise-grid {
@@ -1166,13 +1304,15 @@ video {
 /* Workout Display */
 .current-round-info {
     text-align: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
 }
 
 /* Progress Bar - 10 Circles */
 .progress-bar {
-    margin: 12px 0;
-    padding: 12px;
+    margin: 10px 0;
+    padding: 10px;
+    flex-shrink: 0;
 }
 
 .progress-circles {
@@ -1224,25 +1364,8 @@ video {
 
 @media (max-width: 768px) {
     .progress-bar {
-        margin: 8px 0;
-        padding: 8px;
-    }
-
-    .progress-circles {
-        gap: 6px;
-    }
-
-    .progress-circle {
-        width: 28px;
-        height: 28px;
-        font-size: 0.7rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .progress-bar {
-        margin: 6px 0;
-        padding: 6px;
+        margin: 3px 0;
+        padding: 4px;
     }
 
     .progress-circles {
@@ -1250,9 +1373,28 @@ video {
     }
 
     .progress-circle {
-        width: 24px;
-        height: 24px;
-        font-size: 0.65rem;
+        width: 20px;
+        height: 20px;
+        font-size: 0.6rem;
+        border-width: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-bar {
+        margin: 2px 0;
+        padding: 3px;
+    }
+
+    .progress-circles {
+        gap: 3px;
+    }
+
+    .progress-circle {
+        width: 18px;
+        height: 18px;
+        font-size: 0.55rem;
+        border-width: 1px;
     }
 }
 
