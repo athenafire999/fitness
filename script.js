@@ -355,25 +355,28 @@ document.addEventListener('DOMContentLoaded', function () {
     const sliderFill = document.getElementById('slider-fill');
     let isSliding = false;
 
-    nextRoundSlider.addEventListener('input', function() {
+    nextRoundSlider.addEventListener('input', function () {
         const value = this.value;
         sliderFill.style.width = value + '%';
-        
+
         // When slider reaches 100%, move to next round
         if (value >= 100 && !isSliding) {
             isSliding = true;
-            
+
+            // Stop all TTS announcements and clear pending timeouts
+            stopTTS();
+
             // Store the completed round number before nextRound() increments it
             const completedRound = currentRound;
-            
+
             // Announce the round is complete (before moving to next round)
             if (completedRound > 0) {
                 announceRoundComplete(completedRound);
             }
-            
+
             // Check if this is the last round before proceeding
             const isLastRound = completedRound === totalRounds;
-            
+
             // Wait a moment, then proceed to next round
             setTimeout(() => {
                 if (!isLastRound) {
@@ -401,14 +404,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Reset slider on mouse up if not at 100%
-    nextRoundSlider.addEventListener('mouseup', function() {
+    nextRoundSlider.addEventListener('mouseup', function () {
         if (this.value < 100) {
             this.value = 0;
             sliderFill.style.width = '0%';
         }
     });
 
-    nextRoundSlider.addEventListener('touchend', function() {
+    nextRoundSlider.addEventListener('touchend', function () {
         if (this.value < 100) {
             this.value = 0;
             sliderFill.style.width = '0%';
@@ -821,6 +824,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let speechQueue = [];
     let isSpeaking = false;
     let isAnnouncing = false;
+    let announcementTimeouts = []; // Track all announcement timeouts for cleanup
 
     function speakText(text, options = {}) {
         console.log('TTS: Attempting to speak:', text);
@@ -946,7 +950,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Don't cancel - the queue ensures only one speech at a time
             // Only cancel if we're explicitly stopping (handled by stopTTS)
             const utterance = new SpeechSynthesisUtterance(text);
-            
+
             // Store reference to current utterance for potential cleanup
             let utteranceRef = utterance;
 
@@ -1018,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         speechSynthesis.speak(utterance);
                     }
                 }, 100);
-                
+
                 // Timeout after 5 seconds to prevent infinite wait
                 setTimeout(() => {
                     clearInterval(checkInterval);
@@ -1036,6 +1040,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function stopTTS() {
         console.log('TTS: Stopping all speech');
+
+        // Clear all pending announcement timeouts
+        announcementTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        announcementTimeouts = [];
+
         if (currentAudio) {
             currentAudio.pause();
             currentAudio = null;
@@ -1234,6 +1243,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         isAnnouncing = true;
 
+        // Clear any existing announcement timeouts from previous round
+        announcementTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        announcementTimeouts = [];
+
         // Don't stop current speech - let the queue handle it naturally
         // This ensures each speech finishes before the next starts
 
@@ -1254,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isFirstExercise) {
                 // First exercise announcement with next exercise
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
                     const nextExercise = selectedExercises[1];
                     const nextReps = exerciseReps[nextExercise];
@@ -1267,9 +1280,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         lang: 'en-GB'
                     });
                 }, 1000); // Short delay for first exercise
+                announcementTimeouts.push(timeoutId);
             } else if (!isLastExercise) {
                 // Middle exercises with next exercise
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
                     const nextExercise = selectedExercises[index + 1];
                     const nextReps = exerciseReps[nextExercise];
@@ -1282,9 +1296,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         lang: 'en-GB'
                     });
                 }, cumulativeTime);
+                announcementTimeouts.push(timeoutId);
             } else {
                 // Final exercise announcement
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
                     speakText(`Final exercise: ${exercise}. Do ${reps} ${repText}.`, {
                         rate: 0.95,
@@ -1293,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         lang: 'en-GB'
                     });
                 }, cumulativeTime);
+                announcementTimeouts.push(timeoutId);
             }
 
             // Add time for this exercise plus gap
@@ -1300,10 +1316,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Reset announcement flag after last exercise (no round complete announcement here)
             if (isLastExercise) {
-                setTimeout(() => {
+                const timeoutId = setTimeout(() => {
                     // Reset announcement flag after completion
                     isAnnouncing = false;
                 }, cumulativeTime - EXERCISE_GAP_MS + 1000);
+                announcementTimeouts.push(timeoutId);
             }
         });
     }
@@ -1366,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', function () {
         circles.forEach((circle, index) => {
             const roundNumber = index + 1;
             circle.classList.remove('completed', 'active');
-            
+
             if (roundNumber < currentRound) {
                 // Past rounds - green (completed)
                 circle.classList.add('completed');
@@ -1469,7 +1486,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Array of music options for cycling
     const musicOptions = ['popular-mix', 'hiphop', 'house', ''];
-    
+
     // Function to update change track button text
     function updateChangeTrackButton() {
         const changeTrackBtn = document.getElementById('music-change-track');
@@ -1493,7 +1510,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Update change track button to show current track
             updateChangeTrackButton();
         };
-        
+
         // Initialize button text on page load
         updateChangeTrackButton();
     }
@@ -1504,14 +1521,14 @@ document.addEventListener('DOMContentLoaded', function () {
         changeTrackBtn.addEventListener('click', function () {
             const currentTrack = musicSelection.value;
             const currentIndex = musicOptions.indexOf(currentTrack);
-            
+
             // Find next track (cycle through)
             let nextIndex = (currentIndex + 1) % musicOptions.length;
             const nextTrack = musicOptions[nextIndex];
-            
+
             // Update selection
             musicSelection.value = nextTrack;
-            
+
             // Trigger change event to load new track (this will also update button text)
             if (musicSelection.onchange) {
                 musicSelection.onchange();
@@ -1521,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 musicSelection.dispatchEvent(event);
                 updateChangeTrackButton();
             }
-            
+
             // If music is playing, restart with new track
             if (audioPlayer && !audioPlayer.paused) {
                 audioPlayer.currentTime = 0;
@@ -1532,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // If paused, just load the new track
                 audioPlayer.currentTime = 0;
             }
-            
+
             console.log('Changed track to:', nextTrack || 'No Music');
         });
     }
@@ -1548,7 +1565,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Calculate total reps
         const totalReps = Object.values(workoutStats.totalExerciseReps).reduce((sum, reps) => sum + reps, 0);
-        
+
         // Display total reps
         const totalRepsDiv = document.getElementById('total-reps-display');
         totalRepsDiv.innerHTML = `
@@ -1609,7 +1626,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         beginAtZero: true,
                         ticks: {
                             color: '#e2e8f0',
-                            callback: function(value) {
+                            callback: function (value) {
                                 return value + ' min';
                             }
                         },
