@@ -1702,3 +1702,15 @@ video {
 .status-info {
     color: #28a745 !important;
 }
+/* Mobile Workout Generator Card Adjustments */
+@media (max-width: 768px) {
+    #workout-generator {
+        max-width: 95% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        min-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+}
