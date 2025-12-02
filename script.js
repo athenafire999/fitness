@@ -1069,22 +1069,12 @@ document.addEventListener('DOMContentLoaded', function () {
         option2.textContent = 'Neural Male (Google Cloud)';
         voiceSelect.appendChild(option2);
 
-        const statusElement = document.getElementById('tts-status');
-        if (statusElement) {
-            statusElement.textContent = 'Enhanced Neural TTS Ready';
-            statusElement.className = 'tts-status status-success';
-        }
     }
 
     // Check browser TTS capabilities
     function checkBrowserTTSStatus() {
         if (!('speechSynthesis' in window)) {
             console.error('❌ Speech synthesis not supported');
-            const statusElement = document.getElementById('tts-status');
-            if (statusElement) {
-                statusElement.textContent = 'TTS not supported in this browser';
-                statusElement.className = 'tts-status status-error';
-            }
             return false;
         }
 
@@ -1102,20 +1092,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Update voice selection dropdown with available voices
         updateVoiceSelectionDropdown(englishVoices);
-
-        const statusElement = document.getElementById('tts-status');
-        if (statusElement) {
-            if (enGBVoices.length > 0) {
-                statusElement.textContent = `${enGBVoices.length} en-GB voices available`;
-                statusElement.className = 'tts-status status-info';
-            } else if (englishVoices.length > 0) {
-                statusElement.textContent = `${englishVoices.length} English voices available`;
-                statusElement.className = 'tts-status status-info';
-            } else {
-                statusElement.textContent = 'Using browser default voices';
-                statusElement.className = 'tts-status status-warning';
-            }
-        }
 
         return true;
     }
@@ -1185,11 +1161,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (voices.length > 0) {
             updateVoiceSelection();
-            const statusElement = document.getElementById('tts-status');
-            if (statusElement) {
-                statusElement.textContent = `${voices.length} voices loaded`;
-                statusElement.className = 'tts-status status-info';
-            }
         }
     };
 
