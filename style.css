@@ -1460,8 +1460,71 @@ video {
     flex: 1;
     accent-color: var(--primary-color);
     min-height: 44px;
-    touch-action: pan-x;
+    touch-action: none; /* Allow full slider control on mobile */
     -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Custom slider track for webkit browsers */
+.volume-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+/* Custom slider thumb for webkit browsers */
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    cursor: pointer;
+    margin-top: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* Custom slider track for Firefox */
+.volume-slider::-moz-range-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
+/* Custom slider thumb for Firefox */
+.volume-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* Mobile-specific volume slider adjustments */
+@media (max-width: 768px) {
+    .volume-slider {
+        min-height: 44px;
+        padding: 10px 0;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+        width: 32px;
+        height: 32px;
+        margin-top: -12px;
+    }
+    
+    .volume-slider::-moz-range-thumb {
+        width: 32px;
+        height: 32px;
+    }
 }
 
 .button-icon .track-name {

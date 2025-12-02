@@ -1455,11 +1455,36 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (musicVolumeSlider) {
-        musicVolumeSlider.oninput = function () {
-            if (audioPlayer) {
-                audioPlayer.volume = this.value / 100;
+        // Function to update volume - always get fresh reference to audio player
+        function updateVolume() {
+            const player = document.getElementById('music-player');
+            if (player) {
+                const newVolume = musicVolumeSlider.value / 100;
+                player.volume = newVolume;
+                console.log('Volume updated to:', newVolume, 'Player src:', player.src);
+            } else {
+                console.log('No audio player found');
             }
-        };
+        }
+        
+        // Use addEventListener for better cross-browser support
+        musicVolumeSlider.addEventListener('input', updateVolume);
+        musicVolumeSlider.addEventListener('change', updateVolume);
+        
+        // Additional touch event handlers for mobile compatibility
+        musicVolumeSlider.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            updateVolume();
+        }, { passive: true });
+        
+        musicVolumeSlider.addEventListener('touchmove', function(e) {
+            updateVolume();
+        }, { passive: true });
+        
+        musicVolumeSlider.addEventListener('touchend', function(e) {
+            updateVolume();
+        }, { passive: true });
+        
         // Set initial volume
         if (audioPlayer) {
             audioPlayer.volume = 0.7;
