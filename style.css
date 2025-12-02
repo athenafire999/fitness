@@ -104,6 +104,50 @@ body {
     box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
 
+/* Page Title */
+.page-title {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+}
+
+/* Start Workout & Regenerate buttons - 33% taller */
+#start-workout-button,
+#regenerate-workout-button {
+    padding: 16px 20px;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    #start-workout-button,
+    #regenerate-workout-button {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    #start-workout-button,
+    #regenerate-workout-button {
+        padding: 12px 14px;
+        font-size: 0.9rem;
+    }
+}
+
 /* Workout Display Card - Same size as workout generator */
 #workout-display {
     max-width: calc(100% - 20px);
