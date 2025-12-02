@@ -1061,30 +1061,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const option1 = document.createElement('option');
         option1.value = 'Female';
-        option1.textContent = 'Neural Female (Google Cloud)';
+        option1.textContent = 'Female';
         voiceSelect.appendChild(option1);
 
         const option2 = document.createElement('option');
         option2.value = 'Male';
-        option2.textContent = 'Neural Male (Google Cloud)';
+        option2.textContent = 'Male';
         voiceSelect.appendChild(option2);
-
-        const statusElement = document.getElementById('tts-status');
-        if (statusElement) {
-            statusElement.textContent = 'Enhanced Neural TTS Ready';
-            statusElement.className = 'tts-status status-success';
-        }
     }
 
     // Check browser TTS capabilities
     function checkBrowserTTSStatus() {
         if (!('speechSynthesis' in window)) {
             console.error('❌ Speech synthesis not supported');
-            const statusElement = document.getElementById('tts-status');
-            if (statusElement) {
-                statusElement.textContent = 'TTS not supported in this browser';
-                statusElement.className = 'tts-status status-error';
-            }
             return false;
         }
 
@@ -1100,76 +1089,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const englishVoices = voices.filter(v => v.lang.startsWith('en'));
         console.log('English voices found:', englishVoices.length);
 
-        // Update voice selection dropdown with available voices
-        updateVoiceSelectionDropdown(englishVoices);
-
-        const statusElement = document.getElementById('tts-status');
-        if (statusElement) {
-            if (enGBVoices.length > 0) {
-                statusElement.textContent = `${enGBVoices.length} en-GB voices available`;
-                statusElement.className = 'tts-status status-info';
-            } else if (englishVoices.length > 0) {
-                statusElement.textContent = `${englishVoices.length} English voices available`;
-                statusElement.className = 'tts-status status-info';
-            } else {
-                statusElement.textContent = 'Using browser default voices';
-                statusElement.className = 'tts-status status-warning';
-            }
-        }
-
         return true;
     }
 
-    // Update voice selection dropdown with available voices
-    function updateVoiceSelectionDropdown(englishVoices) {
-        const voiceSelect = document.getElementById('voice-select');
-        if (!voiceSelect) return;
-
-        // Clear existing options
-        voiceSelect.innerHTML = '';
-
-        if (englishVoices.length === 0) {
-            voiceSelect.innerHTML = '<option value="default">Default Voice</option>';
-            return;
-        }
-
-        // Prioritize UK voices since they're available
-        const ukVoices = englishVoices.filter(v => v.name.includes('United Kingdom'));
-        const usVoices = englishVoices.filter(v => v.name.includes('United States'));
-
-        console.log('UK voices found:', ukVoices.map(v => v.name));
-        console.log('US voices found:', usVoices.map(v => v.name));
-
-        // Add UK voices first (preferred)
-        if (ukVoices.length > 0) {
-            ukVoices.forEach(voice => {
-                const gender = voice.name.toLowerCase().includes('hazel') || voice.name.toLowerCase().includes('susan') ? 'Female' : 'Male';
-                voiceSelect.innerHTML += `<option value="${voice.name}">${voice.name} (${gender})</option>`;
-            });
-        }
-
-        // Add US voices as fallback
-        if (usVoices.length > 0 && ukVoices.length === 0) {
-            usVoices.slice(0, 2).forEach(voice => {
-                const gender = voice.name.toLowerCase().includes('zira') || voice.name.toLowerCase().includes('susan') ? 'Female' : 'Male';
-                voiceSelect.innerHTML += `<option value="${voice.name}">${voice.name} (${gender})</option>`;
-            });
-        }
-
-        // Fallback to any English voices
-        if (voiceSelect.innerHTML === '') {
-            englishVoices.slice(0, 2).forEach(voice => {
-                voiceSelect.innerHTML += `<option value="${voice.name}">${voice.name}</option>`;
-            });
-        }
-
-        // Final fallback
-        if (voiceSelect.innerHTML === '') {
-            voiceSelect.innerHTML = '<option value="default">Default Voice</option>';
-        }
-
-        console.log('Updated voice dropdown with options:', voiceSelect.innerHTML);
-    }
 
     // Run browser TTS check when page loads
     setTimeout(() => {
@@ -1185,11 +1107,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (voices.length > 0) {
             updateVoiceSelection();
-            const statusElement = document.getElementById('tts-status');
-            if (statusElement) {
-                statusElement.textContent = `${voices.length} voices loaded`;
-                statusElement.className = 'tts-status status-info';
-            }
         }
     };
 
