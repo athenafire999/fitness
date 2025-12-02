@@ -362,12 +362,59 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Activate screen wake lock to keep screen on during workout
         await requestScreenWakeLock();
+        
+        // Start voice recognition for "next round" commands
+        startVoiceRecognition();
     });
 
     // Next Round Slider
     const nextRoundSlider = document.getElementById('next-round-slider');
     const sliderFill = document.getElementById('slider-fill');
     let isSliding = false;
+    
+    // Function to trigger next round (used by slider and voice command)
+    function triggerNextRound() {
+        if (isSliding) return; // Prevent double trigger
+        isSliding = true;
+
+        // Stop all TTS announcements and clear pending timeouts
+        stopTTS();
+
+        // Store the completed round number before nextRound() increments it
+        const completedRound = currentRound;
+
+        // Announce the round is complete (before moving to next round)
+        if (completedRound > 0) {
+            announceRoundComplete(completedRound);
+        }
+
+        // Check if this is the last round before proceeding
+        const isLastRound = completedRound === totalRounds;
+
+        // Wait a moment, then proceed to next round
+        setTimeout(() => {
+            if (!isLastRound) {
+                nextRound(); // Proceed to the next round (this increments currentRound)
+                // Announce round start and then exercises (same format as first round)
+                announceNextRound(currentRound);
+                // Announce exercises after round start announcement
+                setTimeout(() => {
+                    announceAllExercisesInRound();
+                }, 2000); // 2 second delay to let round announcement finish first
+            } else {
+                // Last round completed, show finish button
+                document.getElementById('active-controls').classList.add('hidden');
+                document.getElementById('finish-workout-button').classList.remove('hidden');
+            }
+        }, 1500); // 1.5 second delay to let round complete announcement finish
+
+        // Reset slider after a short delay
+        setTimeout(() => {
+            nextRoundSlider.value = 0;
+            sliderFill.style.width = '0%';
+            isSliding = false;
+        }, 2000);
+    }
 
     nextRoundSlider.addEventListener('input', function () {
         const value = this.value;
@@ -375,47 +422,94 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // When slider reaches 100%, move to next round
         if (value >= 100 && !isSliding) {
-            isSliding = true;
-
-            // Stop all TTS announcements and clear pending timeouts
-            stopTTS();
-
-            // Store the completed round number before nextRound() increments it
-            const completedRound = currentRound;
-
-            // Announce the round is complete (before moving to next round)
-            if (completedRound > 0) {
-                announceRoundComplete(completedRound);
-            }
-
-            // Check if this is the last round before proceeding
-            const isLastRound = completedRound === totalRounds;
-
-            // Wait a moment, then proceed to next round
-            setTimeout(() => {
-                if (!isLastRound) {
-                    nextRound(); // Proceed to the next round (this increments currentRound)
-                    // Announce round start and then exercises (same format as first round)
-                    announceNextRound(currentRound);
-                    // Announce exercises after round start announcement
-                    setTimeout(() => {
-                        announceAllExercisesInRound();
-                    }, 2000); // 2 second delay to let round announcement finish first
-                } else {
-                    // Last round completed, show finish button
-                    document.getElementById('active-controls').classList.add('hidden');
-                    document.getElementById('finish-workout-button').classList.remove('hidden');
-                }
-            }, 1500); // 1.5 second delay to let round complete announcement finish
-
-            // Reset slider after a short delay
-            setTimeout(() => {
-                this.value = 0;
-                sliderFill.style.width = '0%';
-                isSliding = false;
-            }, 2000);
+            triggerNextRound();
         }
     });
+    
+    // Voice Recognition for "Next Round" command
+    let voiceRecognition = null;
+    let isVoiceListening = false;
+    
+    function setupVoiceRecognition() {
+        // Check if Speech Recognition is supported
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.log('Voice recognition not supported in this browser');
+            return null;
+        }
+        
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onresult = function(event) {
+            const last = event.results.length - 1;
+            const transcript = event.results[last][0].transcript.toLowerCase().trim();
+            console.log('🎤 Voice heard:', transcript);
+            
+            // Check for "next round" or similar commands
+            if (transcript.includes('next round') || 
+                transcript.includes('next') || 
+                transcript.includes('done') ||
+                transcript.includes('finished') ||
+                transcript.includes('complete')) {
+                console.log('🎤 Next round voice command detected!');
+                triggerNextRound();
+            }
+        };
+        
+        recognition.onerror = function(event) {
+            console.log('Voice recognition error:', event.error);
+            if (event.error === 'no-speech' || event.error === 'aborted') {
+                // Restart recognition if it stopped due to no speech
+                if (isVoiceListening) {
+                    setTimeout(() => {
+                        startVoiceRecognition();
+                    }, 1000);
+                }
+            }
+        };
+        
+        recognition.onend = function() {
+            console.log('Voice recognition ended');
+            // Restart if we're still supposed to be listening
+            if (isVoiceListening) {
+                setTimeout(() => {
+                    startVoiceRecognition();
+                }, 500);
+            }
+        };
+        
+        return recognition;
+    }
+    
+    function startVoiceRecognition() {
+        if (!voiceRecognition) {
+            voiceRecognition = setupVoiceRecognition();
+        }
+        if (voiceRecognition && !isVoiceListening) {
+            try {
+                voiceRecognition.start();
+                isVoiceListening = true;
+                console.log('🎤 Voice recognition started - say "next round" to advance');
+            } catch (e) {
+                console.log('Voice recognition start error:', e);
+            }
+        }
+    }
+    
+    function stopVoiceRecognition() {
+        isVoiceListening = false;
+        if (voiceRecognition) {
+            try {
+                voiceRecognition.stop();
+                console.log('🎤 Voice recognition stopped');
+            } catch (e) {
+                console.log('Voice recognition stop error:', e);
+            }
+        }
+    }
 
     // Reset slider on mouse up if not at 100%
     nextRoundSlider.addEventListener('mouseup', function () {
@@ -456,6 +550,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(roundTimerInterval);
         stopMusic();
         stopTTS();
+        stopVoiceRecognition(); // Stop listening for voice commands
         playCompletionSound();
         announceWorkoutComplete();
 
@@ -496,6 +591,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(roundTimerInterval);
         stopMusic();
         stopTTS();
+        stopVoiceRecognition(); // Stop listening for voice commands
 
         // Release screen wake lock when restarting
         releaseScreenWakeLock();
