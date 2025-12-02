@@ -1439,6 +1439,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const audioPlayer = document.getElementById('music-player');
     const volumeMuteBtn = document.getElementById('volume-mute-btn');
     const volumeIcon = document.getElementById('volume-icon');
+    const volumeSlider = document.getElementById('volume-slider');
     
     // Mute state tracking
     let isMuted = false;
@@ -1581,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         
         // Set volume function
-        function setVolume(newVolume) {
+        function setVolume(newVolume, updateSlider = true) {
             // Clamp volume between 0 and 1
             newVolume = Math.max(0, Math.min(1, newVolume));
             volumeBeforeMute = newVolume;
@@ -1599,6 +1600,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 audioPlayer.volume = newVolume;
             }
             
+            // Update slider position
+            if (updateSlider && volumeSlider) {
+                volumeSlider.value = newVolume * 100;
+            }
+            
             // Update mute state
             if (newVolume === 0) {
                 isMuted = true;
@@ -1607,6 +1613,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             
             updateVolumeIcon(newVolume);
+        }
+        
+        // Volume slider event handlers
+        if (volumeSlider) {
+            function handleSliderChange() {
+                const newVolume = volumeSlider.value / 100;
+                setVolume(newVolume, false); // Don't update slider from setVolume (it's already set)
+            }
+            
+            volumeSlider.addEventListener('input', handleSliderChange);
+            volumeSlider.addEventListener('change', handleSliderChange);
+            
+            // Touch events for better mobile support
+            volumeSlider.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+                if (!isAudioContextSetup) setupAudioContext();
+                resumeAudioContext();
+            }, { passive: true });
+            
+            volumeSlider.addEventListener('touchmove', function(e) {
+                handleSliderChange();
+            }, { passive: true });
+            
+            volumeSlider.addEventListener('touchend', function(e) {
+                handleSliderChange();
+            }, { passive: true });
         }
         
         // Touch start

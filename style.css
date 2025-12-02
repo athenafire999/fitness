@@ -1433,6 +1433,14 @@ video {
     flex: 1;
 }
 
+/* Volume container */
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+}
+
 /* Volume button */
 .volume-btn {
     flex-shrink: 0;
@@ -1440,6 +1448,86 @@ video {
 
 .volume-btn.muted i {
     color: var(--danger);
+}
+
+/* Vertical volume slider */
+.volume-slider-vertical {
+    -webkit-appearance: slider-vertical;
+    appearance: slider-vertical;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    width: 20px;
+    height: 50px;
+    background: transparent;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.volume-slider-vertical::-webkit-slider-runnable-track {
+    width: 6px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.volume-slider-vertical::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    margin-left: -4px;
+}
+
+.volume-slider-vertical::-moz-range-track {
+    width: 6px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.volume-slider-vertical::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile adjustments for volume slider */
+@media (max-width: 768px) {
+    .volume-container {
+        height: 32px;
+    }
+    
+    .volume-slider-vertical {
+        height: 40px;
+        width: 18px;
+    }
+    
+    .volume-slider-vertical::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .volume-slider-vertical::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .volume-slider-vertical {
+        height: 35px;
+        width: 16px;
+    }
 }
 
 /* Mini volume slider - inline with controls */
