@@ -1486,6 +1486,44 @@ video {
     color: var(--danger);
 }
 
+/* Voice control button */
+.voice-btn {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.voice-btn i {
+    transition: color 0.3s ease;
+}
+
+.voice-btn.listening {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: var(--success);
+}
+
+.voice-btn.listening i {
+    color: var(--success);
+    animation: pulse-mic 1.5s infinite;
+}
+
+.voice-btn.not-supported {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.voice-btn.not-supported i {
+    color: var(--text-dim);
+}
+
+@keyframes pulse-mic {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
 /* Vertical volume slider */
 .volume-slider-vertical {
     -webkit-appearance: slider-vertical;

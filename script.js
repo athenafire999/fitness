@@ -429,12 +429,38 @@ document.addEventListener('DOMContentLoaded', function () {
     // Voice Recognition for "Next Round" command
     let voiceRecognition = null;
     let isVoiceListening = false;
+    const voiceControlBtn = document.getElementById('voice-control-btn');
+    const voiceIcon = document.getElementById('voice-icon');
+    
+    // Update voice button UI
+    function updateVoiceButtonUI() {
+        if (!voiceControlBtn) return;
+        
+        if (isVoiceListening) {
+            voiceControlBtn.classList.add('listening');
+            voiceControlBtn.classList.remove('not-supported');
+            if (voiceIcon) {
+                voiceIcon.className = 'fas fa-microphone';
+            }
+            voiceControlBtn.title = 'Voice Active - Say "Next Round"';
+        } else {
+            voiceControlBtn.classList.remove('listening');
+            if (voiceIcon) {
+                voiceIcon.className = 'fas fa-microphone-slash';
+            }
+            voiceControlBtn.title = 'Voice Off - Tap to Enable';
+        }
+    }
     
     function setupVoiceRecognition() {
         // Check if Speech Recognition is supported
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             console.log('Voice recognition not supported in this browser');
+            if (voiceControlBtn) {
+                voiceControlBtn.classList.add('not-supported');
+                voiceControlBtn.title = 'Voice not supported in this browser';
+            }
             return null;
         }
         
@@ -468,6 +494,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         startVoiceRecognition();
                     }, 1000);
                 }
+            } else if (event.error === 'not-allowed') {
+                // Microphone permission denied
+                isVoiceListening = false;
+                updateVoiceButtonUI();
+                console.log('🎤 Microphone permission denied');
             }
         };
         
@@ -476,8 +507,14 @@ document.addEventListener('DOMContentLoaded', function () {
             // Restart if we're still supposed to be listening
             if (isVoiceListening) {
                 setTimeout(() => {
-                    startVoiceRecognition();
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.log('Restart error:', e);
+                    }
                 }, 500);
+            } else {
+                updateVoiceButtonUI();
             }
         };
         
@@ -488,13 +525,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!voiceRecognition) {
             voiceRecognition = setupVoiceRecognition();
         }
-        if (voiceRecognition && !isVoiceListening) {
+        if (voiceRecognition) {
             try {
                 voiceRecognition.start();
                 isVoiceListening = true;
+                updateVoiceButtonUI();
                 console.log('🎤 Voice recognition started - say "next round" to advance');
             } catch (e) {
                 console.log('Voice recognition start error:', e);
+                // May already be running, try to restart
+                if (e.name === 'InvalidStateError') {
+                    isVoiceListening = true;
+                    updateVoiceButtonUI();
+                }
             }
         }
     }
@@ -509,6 +552,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Voice recognition stop error:', e);
             }
         }
+        updateVoiceButtonUI();
+    }
+    
+    // Toggle voice recognition on button click
+    if (voiceControlBtn) {
+        voiceControlBtn.addEventListener('click', function() {
+            if (isVoiceListening) {
+                stopVoiceRecognition();
+            } else {
+                startVoiceRecognition();
+            }
+        });
     }
 
     // Reset slider on mouse up if not at 100%
