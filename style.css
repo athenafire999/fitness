@@ -1333,11 +1333,6 @@ video {
     font-size: 0.9rem;
 }
 
-.tts-status {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 8px;
-}
 
 /* Workout Display */
 .current-round-info {
@@ -1686,22 +1681,6 @@ video {
     gap: 8px;
 }
 
-/* Status Colors */
-.status-success {
-    color: #22c55e !important;
-}
-
-.status-error {
-    color: #dc3545 !important;
-}
-
-.status-warning {
-    color: #ffc107 !important;
-}
-
-.status-info {
-    color: #28a745 !important;
-}
 /* Mobile Workout Generator Card Adjustments */
 @media (max-width: 768px) {
     #workout-generator {
