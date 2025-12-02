@@ -1398,6 +1398,23 @@ document.addEventListener('DOMContentLoaded', function () {
     function playMusic() {
         let audioPlayer = document.getElementById('music-player');
         if (audioPlayer && audioPlayer.src) {
+            // Setup Web Audio API for mobile volume control
+            if (!isAudioContextSetup) {
+                setupAudioContext();
+            }
+            
+            // Resume audio context if suspended (required on mobile after user interaction)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log('AudioContext resumed');
+                });
+            }
+            
+            // Apply current volume from slider
+            if (gainNode && musicVolumeSlider) {
+                gainNode.gain.value = musicVolumeSlider.value / 100;
+            }
+            
             audioPlayer.play().catch(e => {
                 console.error("Failed to play music:", e);
             });
@@ -1419,6 +1436,55 @@ document.addEventListener('DOMContentLoaded', function () {
     const musicRewindBtn = document.getElementById('music-rewind');
     const musicVolumeSlider = document.getElementById('music-volume');
     const audioPlayer = document.getElementById('music-player');
+    
+    // Web Audio API for mobile volume control (iOS doesn't allow programmatic volume changes)
+    let audioContext = null;
+    let gainNode = null;
+    let sourceNode = null;
+    let isAudioContextSetup = false;
+    
+    function setupAudioContext() {
+        if (isAudioContextSetup) return;
+        
+        try {
+            const player = document.getElementById('music-player');
+            if (!player) return;
+            
+            // Create AudioContext (with webkit prefix for older Safari)
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Create a gain node for volume control
+            gainNode = audioContext.createGain();
+            gainNode.gain.value = musicVolumeSlider ? musicVolumeSlider.value / 100 : 0.7;
+            
+            // Create source from audio element
+            sourceNode = audioContext.createMediaElementSource(player);
+            
+            // Connect: source -> gain -> destination (speakers)
+            sourceNode.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            isAudioContextSetup = true;
+            console.log('Web Audio API setup complete for mobile volume control');
+        } catch (e) {
+            console.error('Failed to setup Web Audio API:', e);
+        }
+    }
+    
+    // Setup audio context on first user interaction (required for mobile)
+    function initAudioContextOnInteraction() {
+        if (!isAudioContextSetup) {
+            setupAudioContext();
+            // Resume audio context if suspended (mobile requirement)
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+    }
+    
+    // Add listeners for user interaction to init audio context
+    document.addEventListener('click', initAudioContextOnInteraction, { once: true });
+    document.addEventListener('touchstart', initAudioContextOnInteraction, { once: true });
 
     if (musicPlayPauseBtn) {
         musicPlayPauseBtn.onclick = function () {
@@ -1455,15 +1521,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (musicVolumeSlider) {
-        // Function to update volume - always get fresh reference to audio player
+        // Function to update volume - uses Web Audio API GainNode for mobile compatibility
         function updateVolume() {
+            const newVolume = musicVolumeSlider.value / 100;
+            
+            // Initialize audio context if not done yet
+            if (!isAudioContextSetup) {
+                setupAudioContext();
+            }
+            
+            // Use GainNode for volume control (works on mobile)
+            if (gainNode) {
+                gainNode.gain.value = newVolume;
+                console.log('Volume (GainNode) updated to:', newVolume);
+            }
+            
+            // Also set on audio element as fallback for desktop
             const player = document.getElementById('music-player');
             if (player) {
-                const newVolume = musicVolumeSlider.value / 100;
                 player.volume = newVolume;
-                console.log('Volume updated to:', newVolume, 'Player src:', player.src);
-            } else {
-                console.log('No audio player found');
             }
         }
         
@@ -1474,6 +1550,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // Additional touch event handlers for mobile compatibility
         musicVolumeSlider.addEventListener('touchstart', function(e) {
             e.stopPropagation();
+            // Ensure audio context is initialized on touch
+            initAudioContextOnInteraction();
             updateVolume();
         }, { passive: true });
         
