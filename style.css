@@ -1462,6 +1462,65 @@ video {
     min-height: 44px;
     touch-action: pan-x;
     -webkit-tap-highlight-color: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Volume slider track styling */
+.volume-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.volume-slider::-moz-range-track {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+/* Volume slider thumb styling for better touch targets */
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    margin-top: -8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.4);
+}
+
+/* Larger touch target on mobile */
+@media (max-width: 768px) {
+    .volume-slider {
+        min-height: 48px;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+        width: 32px;
+        height: 32px;
+        margin-top: -12px;
+    }
+
+    .volume-slider::-moz-range-thumb {
+        width: 32px;
+        height: 32px;
+    }
 }
 
 .button-icon .track-name {
