@@ -466,53 +466,135 @@ document.addEventListener('DOMContentLoaded', function () {
         
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = false;
+        recognition.interimResults = true; // Get interim results for better responsiveness
         recognition.lang = 'en-US';
+        recognition.maxAlternatives = 3; // Get multiple possible transcriptions
+        
+        recognition.onstart = function() {
+            console.log('🎤 Voice recognition actually started');
+            isVoiceListening = true;
+            updateVoiceButtonUI();
+        };
+        
+        recognition.onaudiostart = function() {
+            console.log('🎤 Audio capturing started');
+        };
+        
+        recognition.onsoundstart = function() {
+            console.log('🎤 Sound detected');
+        };
+        
+        recognition.onspeechstart = function() {
+            console.log('🎤 Speech detected');
+            // Flash the button to show speech is being heard
+            if (voiceControlBtn) {
+                voiceControlBtn.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    voiceControlBtn.style.transform = 'scale(1)';
+                }, 200);
+            }
+        };
         
         recognition.onresult = function(event) {
-            const last = event.results.length - 1;
-            const transcript = event.results[last][0].transcript.toLowerCase().trim();
-            console.log('🎤 Voice heard:', transcript);
+            let transcript = '';
+            let isFinal = false;
             
-            // Check for "next round" or similar commands
-            if (transcript.includes('next round') || 
-                transcript.includes('next') || 
-                transcript.includes('done') ||
-                transcript.includes('finished') ||
-                transcript.includes('complete')) {
-                console.log('🎤 Next round voice command detected!');
-                triggerNextRound();
+            // Get the latest result
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    isFinal = true;
+                }
+            }
+            
+            transcript = transcript.toLowerCase().trim();
+            console.log('🎤 Voice heard:', transcript, '(final:', isFinal, ')');
+            
+            // Show what was heard on the button briefly
+            if (voiceControlBtn && transcript) {
+                voiceControlBtn.title = 'Heard: "' + transcript + '"';
+            }
+            
+            // Check for "next round" or similar commands (only on final results to avoid double triggers)
+            if (isFinal) {
+                if (transcript.includes('next round') || 
+                    transcript.includes('next') || 
+                    transcript.includes('done') ||
+                    transcript.includes('finished') ||
+                    transcript.includes('complete') ||
+                    transcript.includes('round') ||
+                    transcript.includes('go')) {
+                    console.log('🎤 Next round voice command detected!');
+                    // Visual feedback
+                    if (voiceControlBtn) {
+                        voiceControlBtn.style.background = 'rgba(16, 185, 129, 0.8)';
+                        setTimeout(() => {
+                            voiceControlBtn.style.background = '';
+                        }, 500);
+                    }
+                    triggerNextRound();
+                }
             }
         };
         
         recognition.onerror = function(event) {
             console.log('Voice recognition error:', event.error);
-            if (event.error === 'no-speech' || event.error === 'aborted') {
+            if (event.error === 'no-speech') {
+                console.log('🎤 No speech detected - restarting...');
                 // Restart recognition if it stopped due to no speech
                 if (isVoiceListening) {
                     setTimeout(() => {
-                        startVoiceRecognition();
-                    }, 1000);
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.log('Restart after no-speech error:', e);
+                        }
+                    }, 100);
+                }
+            } else if (event.error === 'aborted') {
+                console.log('🎤 Recognition aborted');
+                if (isVoiceListening) {
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            console.log('Restart after abort:', e);
+                        }
+                    }, 500);
                 }
             } else if (event.error === 'not-allowed') {
                 // Microphone permission denied
                 isVoiceListening = false;
                 updateVoiceButtonUI();
                 console.log('🎤 Microphone permission denied');
+                alert('Microphone permission denied. Please allow microphone access for voice commands.');
+            } else if (event.error === 'network') {
+                console.log('🎤 Network error - speech recognition may need internet');
             }
         };
         
         recognition.onend = function() {
-            console.log('Voice recognition ended');
+            console.log('Voice recognition ended, isVoiceListening:', isVoiceListening);
             // Restart if we're still supposed to be listening
             if (isVoiceListening) {
                 setTimeout(() => {
                     try {
                         recognition.start();
+                        console.log('🎤 Restarted voice recognition');
                     } catch (e) {
                         console.log('Restart error:', e);
+                        // If it fails, try again after a longer delay
+                        setTimeout(() => {
+                            try {
+                                recognition.start();
+                            } catch (e2) {
+                                console.log('Second restart failed:', e2);
+                                isVoiceListening = false;
+                                updateVoiceButtonUI();
+                            }
+                        }, 1000);
                     }
-                }, 500);
+                }, 100);
             } else {
                 updateVoiceButtonUI();
             }
