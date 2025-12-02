@@ -300,6 +300,7 @@ input[type="text"]:focus {
 }
 
 .video-container {
+    width: 100%;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
@@ -307,6 +308,7 @@ input[type="text"]:focus {
     background-color: #000;
     aspect-ratio: 16/9;
     border: var(--glass-border);
+    box-sizing: border-box;
 }
 
 video {
@@ -613,8 +615,9 @@ video {
     }
 
     .video-container {
-        max-height: 210px;
-        margin-bottom: 6px;
+        width: 100%;
+        max-height: none;
+        margin-bottom: 10px;
         flex-shrink: 0;
     }
 
@@ -992,8 +995,9 @@ video {
     }
 
     .video-container {
-        max-height: 175px;
-        margin-bottom: 4px;
+        width: 100%;
+        max-height: none;
+        margin-bottom: 8px;
     }
 
     .timer {
