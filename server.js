@@ -6,11 +6,24 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Range'],
+    exposedHeaders: ['Content-Length', 'Content-Range']
+}));
 app.use(express.json());
 
-// Serve static files from the current directory
-app.use(express.static(path.join(__dirname)));
+// Serve static files with explicit CORS headers for audio
+app.use(express.static(path.join(__dirname), {
+    setHeaders: (res, filePath) => {
+        // Set CORS headers for audio files
+        if (filePath.endsWith('.mp3') || filePath.endsWith('.wav') || filePath.endsWith('.ogg')) {
+            res.set('Access-Control-Allow-Origin', '*');
+            res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+        }
+    }
+}));
 
 // Route for the main page
 app.get('/', (req, res) => {

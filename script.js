@@ -781,6 +781,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Creating new audio element');
                 audioPlayer = new Audio();
                 audioPlayer.id = 'music-player';
+                audioPlayer.crossOrigin = 'anonymous';  // Required for Web Audio API
                 document.body.appendChild(audioPlayer);
             }
 
@@ -795,6 +796,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 console.log('Setting audio src to:', musicPath);
+                audioPlayer.crossOrigin = 'anonymous';  // Required for Web Audio API
                 audioPlayer.src = musicPath;
                 audioPlayer.volume = 0.7; // Set initial volume
                 console.log('Audio configured - src:', audioPlayer.src, 'volume:', audioPlayer.volume);
@@ -1444,50 +1446,76 @@ document.addEventListener('DOMContentLoaded', function () {
     let isAudioContextSetup = false;
     
     function setupAudioContext() {
-        if (isAudioContextSetup) return;
+        if (isAudioContextSetup) return true;
         
         try {
             const player = document.getElementById('music-player');
-            if (!player) return;
+            if (!player) {
+                console.log('No audio player found for Web Audio setup');
+                return false;
+            }
+            
+            // Ensure crossOrigin is set for CORS
+            player.crossOrigin = 'anonymous';
             
             // Create AudioContext (with webkit prefix for older Safari)
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('AudioContext created, state:', audioContext.state);
             
             // Create a gain node for volume control
             gainNode = audioContext.createGain();
             gainNode.gain.value = musicVolumeSlider ? musicVolumeSlider.value / 100 : 0.7;
+            console.log('GainNode created with initial value:', gainNode.gain.value);
             
             // Create source from audio element
             sourceNode = audioContext.createMediaElementSource(player);
+            console.log('MediaElementSource created');
             
             // Connect: source -> gain -> destination (speakers)
             sourceNode.connect(gainNode);
             gainNode.connect(audioContext.destination);
+            console.log('Audio graph connected: source -> gain -> destination');
             
             isAudioContextSetup = true;
-            console.log('Web Audio API setup complete for mobile volume control');
+            console.log('✅ Web Audio API setup complete for mobile volume control');
+            return true;
         } catch (e) {
-            console.error('Failed to setup Web Audio API:', e);
+            console.error('❌ Failed to setup Web Audio API:', e);
+            return false;
+        }
+    }
+    
+    // Resume audio context (must be called from user interaction)
+    function resumeAudioContext() {
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+                console.log('AudioContext resumed, state:', audioContext.state);
+            }).catch(e => {
+                console.error('Failed to resume AudioContext:', e);
+            });
         }
     }
     
     // Setup audio context on first user interaction (required for mobile)
     function initAudioContextOnInteraction() {
-        if (!isAudioContextSetup) {
-            setupAudioContext();
-            // Resume audio context if suspended (mobile requirement)
-            if (audioContext && audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-        }
+        console.log('User interaction detected, initializing audio context...');
+        setupAudioContext();
+        resumeAudioContext();
     }
     
-    // Add listeners for user interaction to init audio context
-    document.addEventListener('click', initAudioContextOnInteraction, { once: true });
-    document.addEventListener('touchstart', initAudioContextOnInteraction, { once: true });
+    // Add listeners for user interaction to init audio context (not once - keep trying)
+    ['click', 'touchstart', 'touchend'].forEach(eventType => {
+        document.addEventListener(eventType, initAudioContextOnInteraction, { passive: true });
+    });
 
     if (musicPlayPauseBtn) {
         musicPlayPauseBtn.onclick = function () {
+            // Ensure Web Audio API is set up for mobile volume control
+            if (!isAudioContextSetup) {
+                setupAudioContext();
+            }
+            resumeAudioContext();
+            
             if (audioPlayer && audioPlayer.src) {
                 if (audioPlayer.paused) {
                     audioPlayer.play();
@@ -1527,13 +1555,20 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Initialize audio context if not done yet
             if (!isAudioContextSetup) {
+                console.log('Setting up audio context from volume control...');
                 setupAudioContext();
             }
             
+            // Resume audio context if suspended
+            resumeAudioContext();
+            
             // Use GainNode for volume control (works on mobile)
             if (gainNode) {
-                gainNode.gain.value = newVolume;
-                console.log('Volume (GainNode) updated to:', newVolume);
+                // Use setValueAtTime for smoother changes and better mobile compatibility
+                gainNode.gain.setValueAtTime(newVolume, audioContext.currentTime);
+                console.log('🔊 Volume (GainNode) set to:', newVolume, 'AudioContext state:', audioContext ? audioContext.state : 'null');
+            } else {
+                console.log('⚠️ No GainNode available, isAudioContextSetup:', isAudioContextSetup);
             }
             
             // Also set on audio element as fallback for desktop
@@ -1604,8 +1639,14 @@ document.addEventListener('DOMContentLoaded', function () {
         musicSelection.onchange = function () {
             const selectedMusic = this.value;
             if (selectedMusic && musicFiles[selectedMusic]) {
+                audioPlayer.crossOrigin = 'anonymous';  // Required for Web Audio API
                 audioPlayer.src = musicFiles[selectedMusic];
                 console.log('Music loaded:', musicFiles[selectedMusic]);
+                
+                // Setup Web Audio if not already done
+                if (!isAudioContextSetup) {
+                    setupAudioContext();
+                }
             } else {
                 audioPlayer.src = '';
                 console.log('No music selected');
