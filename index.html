@@ -148,10 +148,10 @@
                     <button id="music-change-track" class="button button-icon" title="Change Track">
                         <i class="fas fa-music"></i>
                     </button>
-                    <div class="volume-control">
-                        <i class="fas fa-volume-up volume-icon"></i>
-                        <input type="range" id="music-volume" min="0" max="100" value="70" class="volume-slider">
-                    </div>
+                    <button id="volume-mute-btn" class="button button-icon volume-btn" title="Mute/Unmute">
+                        <i class="fas fa-volume-up" id="volume-icon"></i>
+                    </button>
+                    <input type="range" id="music-volume" min="0" max="100" value="70" class="volume-slider-mini">
                 </div>
                 <div class="next-round-slider-container">
                     <div class="slider-label">Slide to Next Round</div>
@@ -193,7 +193,7 @@
     <audio id="music-player" crossorigin="anonymous"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
 
 </body>
 

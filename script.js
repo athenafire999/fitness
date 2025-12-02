@@ -1438,6 +1438,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const musicRewindBtn = document.getElementById('music-rewind');
     const musicVolumeSlider = document.getElementById('music-volume');
     const audioPlayer = document.getElementById('music-player');
+    const volumeMuteBtn = document.getElementById('volume-mute-btn');
+    const volumeIcon = document.getElementById('volume-icon');
+    
+    // Mute state tracking
+    let isMuted = false;
+    let volumeBeforeMute = 0.7;
     
     // Web Audio API for mobile volume control (iOS doesn't allow programmatic volume changes)
     let audioContext = null;
@@ -1548,6 +1554,52 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
+    // Mute/Unmute button handler
+    if (volumeMuteBtn) {
+        volumeMuteBtn.onclick = function () {
+            // Ensure audio context is set up
+            if (!isAudioContextSetup) {
+                setupAudioContext();
+            }
+            resumeAudioContext();
+            
+            if (isMuted) {
+                // Unmute - restore previous volume
+                isMuted = false;
+                musicVolumeSlider.value = volumeBeforeMute * 100;
+                
+                if (gainNode && audioContext) {
+                    gainNode.gain.setValueAtTime(volumeBeforeMute, audioContext.currentTime);
+                }
+                if (audioPlayer) {
+                    audioPlayer.volume = volumeBeforeMute;
+                }
+                
+                // Update icon
+                volumeIcon.className = 'fas fa-volume-up';
+                volumeMuteBtn.classList.remove('muted');
+                console.log('🔊 Unmuted, volume:', volumeBeforeMute);
+            } else {
+                // Mute - save current volume and set to 0
+                volumeBeforeMute = musicVolumeSlider.value / 100;
+                isMuted = true;
+                musicVolumeSlider.value = 0;
+                
+                if (gainNode && audioContext) {
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                }
+                if (audioPlayer) {
+                    audioPlayer.volume = 0;
+                }
+                
+                // Update icon
+                volumeIcon.className = 'fas fa-volume-mute';
+                volumeMuteBtn.classList.add('muted');
+                console.log('🔇 Muted, saved volume:', volumeBeforeMute);
+            }
+        };
+    }
+
     if (musicVolumeSlider) {
         // Function to update volume - uses Web Audio API GainNode for mobile compatibility
         function updateVolume() {
@@ -1566,15 +1618,35 @@ document.addEventListener('DOMContentLoaded', function () {
             if (gainNode) {
                 // Use setValueAtTime for smoother changes and better mobile compatibility
                 gainNode.gain.setValueAtTime(newVolume, audioContext.currentTime);
-                console.log('🔊 Volume (GainNode) set to:', newVolume, 'AudioContext state:', audioContext ? audioContext.state : 'null');
-            } else {
-                console.log('⚠️ No GainNode available, isAudioContextSetup:', isAudioContextSetup);
             }
             
             // Also set on audio element as fallback for desktop
             const player = document.getElementById('music-player');
             if (player) {
                 player.volume = newVolume;
+            }
+            
+            // Update mute state and icon based on slider position
+            if (volumeIcon) {
+                if (newVolume === 0) {
+                    isMuted = true;
+                    volumeIcon.className = 'fas fa-volume-mute';
+                    if (volumeMuteBtn) volumeMuteBtn.classList.add('muted');
+                } else {
+                    if (isMuted) {
+                        // User moved slider while muted - unmute
+                        isMuted = false;
+                        if (volumeMuteBtn) volumeMuteBtn.classList.remove('muted');
+                    }
+                    // Update icon based on volume level
+                    if (newVolume < 0.3) {
+                        volumeIcon.className = 'fas fa-volume-off';
+                    } else if (newVolume < 0.7) {
+                        volumeIcon.className = 'fas fa-volume-down';
+                    } else {
+                        volumeIcon.className = 'fas fa-volume-up';
+                    }
+                }
             }
         }
         
