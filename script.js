@@ -1553,9 +1553,134 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    // Mute/Unmute button handler
+    // Volume button - tap to mute, slide to adjust volume
     if (volumeMuteBtn) {
-        volumeMuteBtn.onclick = function () {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartVolume = volumeBeforeMute;
+        let isDragging = false;
+        let hasMoved = false;
+        
+        // Update volume icon based on level
+        function updateVolumeIcon(volume) {
+            if (!volumeIcon) return;
+            
+            if (volume === 0 || isMuted) {
+                volumeIcon.className = 'fas fa-volume-mute';
+                volumeMuteBtn.classList.add('muted');
+            } else if (volume < 0.3) {
+                volumeIcon.className = 'fas fa-volume-off';
+                volumeMuteBtn.classList.remove('muted');
+            } else if (volume < 0.7) {
+                volumeIcon.className = 'fas fa-volume-down';
+                volumeMuteBtn.classList.remove('muted');
+            } else {
+                volumeIcon.className = 'fas fa-volume-up';
+                volumeMuteBtn.classList.remove('muted');
+            }
+        }
+        
+        // Set volume function
+        function setVolume(newVolume) {
+            // Clamp volume between 0 and 1
+            newVolume = Math.max(0, Math.min(1, newVolume));
+            volumeBeforeMute = newVolume;
+            
+            // Ensure audio context is set up
+            if (!isAudioContextSetup) {
+                setupAudioContext();
+            }
+            resumeAudioContext();
+            
+            if (gainNode && audioContext) {
+                gainNode.gain.setValueAtTime(newVolume, audioContext.currentTime);
+            }
+            if (audioPlayer) {
+                audioPlayer.volume = newVolume;
+            }
+            
+            // Update mute state
+            if (newVolume === 0) {
+                isMuted = true;
+            } else {
+                isMuted = false;
+            }
+            
+            updateVolumeIcon(newVolume);
+        }
+        
+        // Touch start
+        volumeMuteBtn.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartVolume = isMuted ? 0 : volumeBeforeMute;
+            isDragging = true;
+            hasMoved = false;
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Touch move - adjust volume based on horizontal movement
+        volumeMuteBtn.addEventListener('touchmove', function(e) {
+            if (!isDragging) return;
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            const deltaX = touchX - touchStartX;
+            const deltaY = touchY - touchStartY;
+            
+            // Check if moved enough to be considered a drag (not a tap)
+            if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                hasMoved = true;
+            }
+            
+            if (hasMoved) {
+                // Use horizontal movement primarily, but also consider vertical (up = louder)
+                // Sensitivity: 100px movement = full volume range
+                const sensitivity = 100;
+                const volumeChange = (deltaX - deltaY) / sensitivity;
+                const newVolume = touchStartVolume + volumeChange;
+                
+                setVolume(newVolume);
+            }
+            
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Touch end - if no drag, toggle mute
+        volumeMuteBtn.addEventListener('touchend', function(e) {
+            if (!hasMoved) {
+                // This was a tap - toggle mute
+                if (isMuted) {
+                    // Unmute - restore to at least 0.5 if was at 0
+                    const restoreVolume = volumeBeforeMute > 0 ? volumeBeforeMute : 0.5;
+                    setVolume(restoreVolume);
+                    console.log('🔊 Tap: Unmuted, volume:', restoreVolume);
+                } else {
+                    // Mute
+                    if (gainNode && audioContext) {
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                    }
+                    if (audioPlayer) {
+                        audioPlayer.volume = 0;
+                    }
+                    isMuted = true;
+                    updateVolumeIcon(0);
+                    console.log('🔇 Tap: Muted');
+                }
+            } else {
+                console.log('🔊 Slide: Volume set to', volumeBeforeMute.toFixed(2));
+            }
+            
+            isDragging = false;
+            hasMoved = false;
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Mouse click for desktop - toggle mute
+        volumeMuteBtn.addEventListener('click', function(e) {
+            // Only handle if not from touch (touch devices fire both touch and click)
+            if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+            
             // Ensure audio context is set up
             if (!isAudioContextSetup) {
                 setupAudioContext();
@@ -1563,37 +1688,24 @@ document.addEventListener('DOMContentLoaded', function () {
             resumeAudioContext();
             
             if (isMuted) {
-                // Unmute - restore previous volume
-                isMuted = false;
-                
-                if (gainNode && audioContext) {
-                    gainNode.gain.setValueAtTime(volumeBeforeMute, audioContext.currentTime);
-                }
-                if (audioPlayer) {
-                    audioPlayer.volume = volumeBeforeMute;
-                }
-                
-                // Update icon
-                if (volumeIcon) volumeIcon.className = 'fas fa-volume-up';
-                volumeMuteBtn.classList.remove('muted');
-                console.log('🔊 Unmuted, volume:', volumeBeforeMute);
+                const restoreVolume = volumeBeforeMute > 0 ? volumeBeforeMute : 0.5;
+                setVolume(restoreVolume);
+                console.log('🔊 Click: Unmuted, volume:', restoreVolume);
             } else {
-                // Mute - set to 0 (volumeBeforeMute is already set to default 0.7)
-                isMuted = true;
-                
                 if (gainNode && audioContext) {
                     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
                 }
                 if (audioPlayer) {
                     audioPlayer.volume = 0;
                 }
-                
-                // Update icon
-                if (volumeIcon) volumeIcon.className = 'fas fa-volume-mute';
-                volumeMuteBtn.classList.add('muted');
-                console.log('🔇 Muted');
+                isMuted = true;
+                updateVolumeIcon(0);
+                console.log('🔇 Click: Muted');
             }
-        };
+        });
+        
+        // Initialize icon
+        updateVolumeIcon(volumeBeforeMute);
     }
 
     // Set initial volume on audio player
