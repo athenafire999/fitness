@@ -1455,11 +1455,34 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (musicVolumeSlider) {
-        musicVolumeSlider.oninput = function () {
+        // Function to update volume
+        function updateVolume() {
             if (audioPlayer) {
-                audioPlayer.volume = this.value / 100;
+                audioPlayer.volume = musicVolumeSlider.value / 100;
             }
-        };
+        }
+
+        // Desktop events
+        musicVolumeSlider.oninput = updateVolume;
+        musicVolumeSlider.onchange = updateVolume;
+
+        // Mobile touch events for better compatibility
+        musicVolumeSlider.addEventListener('touchstart', function(e) {
+            // Prevent default to avoid scroll interference on some devices
+            e.stopPropagation();
+        }, { passive: true });
+
+        musicVolumeSlider.addEventListener('touchmove', function(e) {
+            // Update volume during touch drag
+            updateVolume();
+            e.stopPropagation();
+        }, { passive: true });
+
+        musicVolumeSlider.addEventListener('touchend', function(e) {
+            // Ensure final value is applied
+            updateVolume();
+        }, { passive: true });
+
         // Set initial volume
         if (audioPlayer) {
             audioPlayer.volume = 0.7;
