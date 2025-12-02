@@ -796,8 +796,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 console.log('Setting audio src to:', musicPath);
                 audioPlayer.src = musicPath;
-                audioPlayer.volume = 0.7; // Set initial volume
-                console.log('Audio configured - src:', audioPlayer.src, 'volume:', audioPlayer.volume);
+                const sliderElement = document.getElementById('music-volume');
+                const sliderVolume = sliderElement ? sliderElement.value / 100 : currentVolumeLevel;
+                ensureAudioPipeline();
+                updateMusicVolume(sliderVolume);
+                console.log('Audio configured - src:', audioPlayer.src, 'volume:', sliderVolume);
 
                 // Add event listeners for debugging
                 audioPlayer.addEventListener('loadeddata', () => {
@@ -1396,8 +1399,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function playMusic() {
-        let audioPlayer = document.getElementById('music-player');
         if (audioPlayer && audioPlayer.src) {
+            ensureAudioPipeline();
+            updateMusicVolume(currentVolumeLevel);
             audioPlayer.play().catch(e => {
                 console.error("Failed to play music:", e);
             });
@@ -1419,10 +1423,68 @@ document.addEventListener('DOMContentLoaded', function () {
     const musicRewindBtn = document.getElementById('music-rewind');
     const musicVolumeSlider = document.getElementById('music-volume');
     const audioPlayer = document.getElementById('music-player');
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    let audioContext = null;
+    let audioGainNode = null;
+    let mediaElementSource = null;
+    let audioResumeListenersBound = false;
+    let currentVolumeLevel = musicVolumeSlider ? musicVolumeSlider.value / 100 : 0.7;
+
+    function ensureAudioPipeline() {
+        if (!AudioContextClass || !audioPlayer) {
+            return;
+        }
+
+        if (!audioContext) {
+            audioContext = new AudioContextClass();
+            bindAudioContextResume();
+        }
+
+        if (!audioGainNode) {
+            audioGainNode = audioContext.createGain();
+            audioGainNode.connect(audioContext.destination);
+            audioGainNode.gain.value = currentVolumeLevel;
+        }
+
+        if (!mediaElementSource) {
+            mediaElementSource = audioContext.createMediaElementSource(audioPlayer);
+            mediaElementSource.connect(audioGainNode);
+        }
+    }
+
+    function bindAudioContextResume() {
+        if (audioResumeListenersBound || !audioContext) {
+            return;
+        }
+
+        const resumeContext = () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        };
+
+        ['touchstart', 'touchend', 'pointerdown', 'keydown'].forEach(eventName => {
+            document.addEventListener(eventName, resumeContext, { passive: true });
+        });
+
+        audioResumeListenersBound = true;
+    }
+
+    function updateMusicVolume(value) {
+        currentVolumeLevel = Math.min(1, Math.max(0, value));
+        if (audioPlayer) {
+            audioPlayer.volume = currentVolumeLevel;
+        }
+        if (audioGainNode) {
+            audioGainNode.gain.value = currentVolumeLevel;
+        }
+    }
 
     if (musicPlayPauseBtn) {
         musicPlayPauseBtn.onclick = function () {
             if (audioPlayer && audioPlayer.src) {
+                ensureAudioPipeline();
+                updateMusicVolume(currentVolumeLevel);
                 if (audioPlayer.paused) {
                     audioPlayer.play();
                     musicPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
@@ -1455,15 +1517,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (musicVolumeSlider) {
-        musicVolumeSlider.oninput = function () {
-            if (audioPlayer) {
-                audioPlayer.volume = this.value / 100;
-            }
+        const handleVolumeInput = (event) => {
+            const sliderValue = event.target.value / 100;
+            ensureAudioPipeline();
+            updateMusicVolume(sliderValue);
         };
-        // Set initial volume
-        if (audioPlayer) {
-            audioPlayer.volume = 0.7;
-        }
+
+        musicVolumeSlider.addEventListener('input', handleVolumeInput);
+        musicVolumeSlider.addEventListener('change', handleVolumeInput);
+
+        ensureAudioPipeline();
+        updateMusicVolume(musicVolumeSlider.value / 100);
+    } else if (audioPlayer) {
+        updateMusicVolume(currentVolumeLevel);
     }
 
     // Music Selection
@@ -1502,6 +1568,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const selectedMusic = this.value;
             if (selectedMusic && musicFiles[selectedMusic]) {
                 audioPlayer.src = musicFiles[selectedMusic];
+                ensureAudioPipeline();
+                updateMusicVolume(currentVolumeLevel);
                 console.log('Music loaded:', musicFiles[selectedMusic]);
             } else {
                 audioPlayer.src = '';
