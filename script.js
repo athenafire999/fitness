@@ -1058,119 +1058,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateVoiceSelection() {
-        const voiceSelect = document.getElementById('voice-select');
-        voiceSelect.innerHTML = '';
-
-        const option1 = document.createElement('option');
-        option1.value = 'Female';
-        option1.textContent = 'Neural Female (Google Cloud)';
-        voiceSelect.appendChild(option1);
-
-        const option2 = document.createElement('option');
-        option2.value = 'Male';
-        option2.textContent = 'Neural Male (Google Cloud)';
-        voiceSelect.appendChild(option2);
-
-        const statusElement = document.getElementById('tts-status');
-        if (statusElement) {
-            statusElement.textContent = 'Enhanced Neural TTS Ready';
-            statusElement.className = 'tts-status status-success';
-        }
+        // Voice options are already set in HTML as simple "Female" and "Male"
+        // No need to update them
     }
 
     // Check browser TTS capabilities
     function checkBrowserTTSStatus() {
         if (!('speechSynthesis' in window)) {
             console.error('❌ Speech synthesis not supported');
-            const statusElement = document.getElementById('tts-status');
-            if (statusElement) {
-                statusElement.textContent = 'TTS not supported in this browser';
-                statusElement.className = 'tts-status status-error';
-            }
             return false;
         }
 
         const voices = speechSynthesis.getVoices();
         console.log('✅ Browser TTS supported, voices available:', voices.length);
-        console.log('All available voices:', voices.map(v => `${v.name} (${v.lang})`));
-
-        // Check for en-GB voices
-        const enGBVoices = voices.filter(v => v.lang.startsWith('en-GB'));
-        console.log('en-GB voices found:', enGBVoices.length);
-
-        // Check for all English voices
-        const englishVoices = voices.filter(v => v.lang.startsWith('en'));
-        console.log('English voices found:', englishVoices.length);
-
-        // Update voice selection dropdown with available voices
-        updateVoiceSelectionDropdown(englishVoices);
-
-        const statusElement = document.getElementById('tts-status');
-        if (statusElement) {
-            if (enGBVoices.length > 0) {
-                statusElement.textContent = `${enGBVoices.length} en-GB voices available`;
-                statusElement.className = 'tts-status status-info';
-            } else if (englishVoices.length > 0) {
-                statusElement.textContent = `${englishVoices.length} English voices available`;
-                statusElement.className = 'tts-status status-info';
-            } else {
-                statusElement.textContent = 'Using browser default voices';
-                statusElement.className = 'tts-status status-warning';
-            }
-        }
 
         return true;
-    }
-
-    // Update voice selection dropdown with available voices
-    function updateVoiceSelectionDropdown(englishVoices) {
-        const voiceSelect = document.getElementById('voice-select');
-        if (!voiceSelect) return;
-
-        // Clear existing options
-        voiceSelect.innerHTML = '';
-
-        if (englishVoices.length === 0) {
-            voiceSelect.innerHTML = '<option value="default">Default Voice</option>';
-            return;
-        }
-
-        // Prioritize UK voices since they're available
-        const ukVoices = englishVoices.filter(v => v.name.includes('United Kingdom'));
-        const usVoices = englishVoices.filter(v => v.name.includes('United States'));
-
-        console.log('UK voices found:', ukVoices.map(v => v.name));
-        console.log('US voices found:', usVoices.map(v => v.name));
-
-        // Add UK voices first (preferred)
-        if (ukVoices.length > 0) {
-            ukVoices.forEach(voice => {
-                const gender = voice.name.toLowerCase().includes('hazel') || voice.name.toLowerCase().includes('susan') ? 'Female' : 'Male';
-                voiceSelect.innerHTML += `<option value="${voice.name}">${voice.name} (${gender})</option>`;
-            });
-        }
-
-        // Add US voices as fallback
-        if (usVoices.length > 0 && ukVoices.length === 0) {
-            usVoices.slice(0, 2).forEach(voice => {
-                const gender = voice.name.toLowerCase().includes('zira') || voice.name.toLowerCase().includes('susan') ? 'Female' : 'Male';
-                voiceSelect.innerHTML += `<option value="${voice.name}">${voice.name} (${gender})</option>`;
-            });
-        }
-
-        // Fallback to any English voices
-        if (voiceSelect.innerHTML === '') {
-            englishVoices.slice(0, 2).forEach(voice => {
-                voiceSelect.innerHTML += `<option value="${voice.name}">${voice.name}</option>`;
-            });
-        }
-
-        // Final fallback
-        if (voiceSelect.innerHTML === '') {
-            voiceSelect.innerHTML = '<option value="default">Default Voice</option>';
-        }
-
-        console.log('Updated voice dropdown with options:', voiceSelect.innerHTML);
     }
 
     // Run browser TTS check when page loads
@@ -1181,35 +1083,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Force voice loading immediately on any user interaction
     const forceVoiceLoad = () => {
-        console.log('User interaction detected - forcing voice load');
         const voices = speechSynthesis.getVoices();
-        console.log('Voices after user interaction:', voices.length);
-
-        if (voices.length > 0) {
-            updateVoiceSelection();
-            const statusElement = document.getElementById('tts-status');
-            if (statusElement) {
-                statusElement.textContent = `${voices.length} voices loaded`;
-                statusElement.className = 'tts-status status-info';
-            }
-        }
+        console.log('Voices loaded:', voices.length);
     };
 
-    // Add multiple event listeners for user interaction
+    // Add event listener for user interaction
     document.addEventListener('click', forceVoiceLoad, { once: true });
     document.addEventListener('touchstart', forceVoiceLoad, { once: true });
-    document.addEventListener('mousedown', forceVoiceLoad, { once: true });
-    document.addEventListener('keydown', forceVoiceLoad, { once: true });
-
-    // Initialize Voice Selection
-    updateVoiceSelection();
-
-    // Optional: Check browser support for fallback
-    if ('speechSynthesis' in window) {
-        speechSynthesis.onvoiceschanged = () => {
-            console.log('Browser voices changed');
-        };
-    }
 
     // TTS Announcements for workout events (matching original BD2 style)
     function announceWorkoutStart() {
