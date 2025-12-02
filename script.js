@@ -1412,9 +1412,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
             
-            // Apply current volume from slider
-            if (gainNode && musicVolumeSlider) {
-                gainNode.gain.value = musicVolumeSlider.value / 100;
+            // Apply current volume (use saved volume, respecting mute state)
+            if (gainNode) {
+                gainNode.gain.value = isMuted ? 0 : volumeBeforeMute;
             }
             
             audioPlayer.play().catch(e => {
@@ -1436,7 +1436,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const musicPlayPauseBtn = document.getElementById('music-play-pause');
     const musicStopBtn = document.getElementById('music-stop');
     const musicRewindBtn = document.getElementById('music-rewind');
-    const musicVolumeSlider = document.getElementById('music-volume');
     const audioPlayer = document.getElementById('music-player');
     const volumeMuteBtn = document.getElementById('volume-mute-btn');
     const volumeIcon = document.getElementById('volume-icon');
@@ -1470,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Create a gain node for volume control
             gainNode = audioContext.createGain();
-            gainNode.gain.value = musicVolumeSlider ? musicVolumeSlider.value / 100 : 0.7;
+            gainNode.gain.value = isMuted ? 0 : volumeBeforeMute;
             console.log('GainNode created with initial value:', gainNode.gain.value);
             
             // Create source from audio element
@@ -1566,7 +1565,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (isMuted) {
                 // Unmute - restore previous volume
                 isMuted = false;
-                musicVolumeSlider.value = volumeBeforeMute * 100;
                 
                 if (gainNode && audioContext) {
                     gainNode.gain.setValueAtTime(volumeBeforeMute, audioContext.currentTime);
@@ -1576,14 +1574,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 
                 // Update icon
-                volumeIcon.className = 'fas fa-volume-up';
+                if (volumeIcon) volumeIcon.className = 'fas fa-volume-up';
                 volumeMuteBtn.classList.remove('muted');
                 console.log('🔊 Unmuted, volume:', volumeBeforeMute);
             } else {
-                // Mute - save current volume and set to 0
-                volumeBeforeMute = musicVolumeSlider.value / 100;
+                // Mute - set to 0 (volumeBeforeMute is already set to default 0.7)
                 isMuted = true;
-                musicVolumeSlider.value = 0;
                 
                 if (gainNode && audioContext) {
                     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
@@ -1593,87 +1589,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 
                 // Update icon
-                volumeIcon.className = 'fas fa-volume-mute';
+                if (volumeIcon) volumeIcon.className = 'fas fa-volume-mute';
                 volumeMuteBtn.classList.add('muted');
-                console.log('🔇 Muted, saved volume:', volumeBeforeMute);
+                console.log('🔇 Muted');
             }
         };
     }
 
-    if (musicVolumeSlider) {
-        // Function to update volume - uses Web Audio API GainNode for mobile compatibility
-        function updateVolume() {
-            const newVolume = musicVolumeSlider.value / 100;
-            
-            // Initialize audio context if not done yet
-            if (!isAudioContextSetup) {
-                console.log('Setting up audio context from volume control...');
-                setupAudioContext();
-            }
-            
-            // Resume audio context if suspended
-            resumeAudioContext();
-            
-            // Use GainNode for volume control (works on mobile)
-            if (gainNode) {
-                // Use setValueAtTime for smoother changes and better mobile compatibility
-                gainNode.gain.setValueAtTime(newVolume, audioContext.currentTime);
-            }
-            
-            // Also set on audio element as fallback for desktop
-            const player = document.getElementById('music-player');
-            if (player) {
-                player.volume = newVolume;
-            }
-            
-            // Update mute state and icon based on slider position
-            if (volumeIcon) {
-                if (newVolume === 0) {
-                    isMuted = true;
-                    volumeIcon.className = 'fas fa-volume-mute';
-                    if (volumeMuteBtn) volumeMuteBtn.classList.add('muted');
-                } else {
-                    if (isMuted) {
-                        // User moved slider while muted - unmute
-                        isMuted = false;
-                        if (volumeMuteBtn) volumeMuteBtn.classList.remove('muted');
-                    }
-                    // Update icon based on volume level
-                    if (newVolume < 0.3) {
-                        volumeIcon.className = 'fas fa-volume-off';
-                    } else if (newVolume < 0.7) {
-                        volumeIcon.className = 'fas fa-volume-down';
-                    } else {
-                        volumeIcon.className = 'fas fa-volume-up';
-                    }
-                }
-            }
-        }
-        
-        // Use addEventListener for better cross-browser support
-        musicVolumeSlider.addEventListener('input', updateVolume);
-        musicVolumeSlider.addEventListener('change', updateVolume);
-        
-        // Additional touch event handlers for mobile compatibility
-        musicVolumeSlider.addEventListener('touchstart', function(e) {
-            e.stopPropagation();
-            // Ensure audio context is initialized on touch
-            initAudioContextOnInteraction();
-            updateVolume();
-        }, { passive: true });
-        
-        musicVolumeSlider.addEventListener('touchmove', function(e) {
-            updateVolume();
-        }, { passive: true });
-        
-        musicVolumeSlider.addEventListener('touchend', function(e) {
-            updateVolume();
-        }, { passive: true });
-        
-        // Set initial volume
-        if (audioPlayer) {
-            audioPlayer.volume = 0.7;
-        }
+    // Set initial volume on audio player
+    if (audioPlayer) {
+        audioPlayer.volume = volumeBeforeMute;
     }
 
     // Music Selection
