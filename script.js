@@ -335,6 +335,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('start-workout-button').addEventListener('click', async function () {
+        // Update title to show workout type
+        const workoutType = document.getElementById('workout-type').value;
+        const workoutTitleText = document.getElementById('workout-title-text');
+        if (workoutTitleText) {
+            if (workoutType === 'customize') {
+                workoutTitleText.textContent = 'Training Plan: Custom';
+            } else {
+                workoutTitleText.textContent = 'Training Plan: ' + workoutType;
+            }
+        }
+        
         startWorkout();
         nextRound();
         document.getElementById('start-workout-button').classList.add('hidden');
@@ -550,15 +561,10 @@ document.addEventListener('DOMContentLoaded', function () {
             return `<li><div class="number-badge">${index + 1}</div><span>${exercise}</span></li>`;
         }).join('');
 
-        // Update the Training Plan title with workout type
-        const workoutType = document.getElementById('workout-type').value;
-        const workoutTypeTitle = document.getElementById('workout-type-title');
-        if (workoutTypeTitle) {
-            if (workoutType === 'customize') {
-                workoutTypeTitle.textContent = 'Custom';
-            } else {
-                workoutTypeTitle.textContent = workoutType;
-            }
+        // Reset title to just "Training Plan" initially
+        const workoutTitleText = document.getElementById('workout-title-text');
+        if (workoutTitleText) {
+            workoutTitleText.textContent = 'Training Plan';
         }
 
         console.log('Hiding workout generator, showing workout display');
