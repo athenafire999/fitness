@@ -104,7 +104,7 @@ body {
     box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
 
-/* Workout Display Card - Slightly smaller than container */
+/* Workout Display Card - Same size as workout generator */
 #workout-display {
     max-width: calc(100% - 20px);
     margin-left: auto;
@@ -112,15 +112,16 @@ body {
     padding: 16px;
 }
 
-/* Workout Generator Card - Nearly full width on mobile with small gap */
-
+/* Mobile: Match workout-display to workout-generator size */
 @media (max-width: 768px) {
     #workout-display {
-        max-width: calc(100% - 8px);
-        padding: 6px;
-        margin-bottom: 4px;
-        max-height: calc(100vh - 8px);
-        max-height: calc(100dvh - 8px);
+        max-width: calc(100% - 12px) !important;
+        width: calc(100% - 12px) !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        min-height: calc(100vh - 20px);
+        min-height: calc(100dvh - 20px);
+        padding: 16px;
         overflow-y: auto;
         overflow-x: hidden;
         display: flex;
@@ -135,9 +136,11 @@ body {
 
 @media (max-width: 480px) {
     #workout-display {
-        max-width: calc(100% - 6px);
-        padding: 10px;
-        margin-bottom: 3px;
+        max-width: calc(100% - 8px) !important;
+        width: calc(100% - 8px) !important;
+        min-height: calc(100vh - 12px);
+        min-height: calc(100dvh - 12px);
+        padding: 12px;
     }
 }
 
