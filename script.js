@@ -550,6 +550,17 @@ document.addEventListener('DOMContentLoaded', function () {
             return `<li><div class="number-badge">${index + 1}</div><span>${exercise}</span></li>`;
         }).join('');
 
+        // Update the Training Plan title with workout type
+        const workoutType = document.getElementById('workout-type').value;
+        const workoutTypeTitle = document.getElementById('workout-type-title');
+        if (workoutTypeTitle) {
+            if (workoutType === 'customize') {
+                workoutTypeTitle.textContent = 'Custom';
+            } else {
+                workoutTypeTitle.textContent = workoutType;
+            }
+        }
+
         console.log('Hiding workout generator, showing workout display');
         document.getElementById('workout-generator').classList.add('hidden');
         document.getElementById('workout-display').classList.remove('hidden');
