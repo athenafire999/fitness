@@ -38,11 +38,43 @@ document.addEventListener('DOMContentLoaded', function () {
     let totalPausedTime = 0;
     let roundPausedTime = 0;
 
+    const musicFiles = {
+        'popular-mix': 'popular.mp3',
+        'hiphop': 'hop.mp3',
+        'house': 'house.mp3'
+    };
+
+    const trackNames = {
+        'popular-mix': 'Popular',
+        'hiphop': 'Hip-Hop',
+        'house': 'House',
+        '': 'No Music'
+    };
+
+    const musicOptions = ['popular-mix', 'hiphop', 'house', ''];
+    const DEFAULT_MUSIC_VOLUME = 0.7;
+    let currentMusicVolume = DEFAULT_MUSIC_VOLUME;
+
     // Workout statistics tracking
     let workoutStats = {
         roundData: [],  // Array of objects: { round: 1, exercises: {}, startTime: timestamp, endTime: timestamp, duration: seconds }
         totalExerciseReps: {}  // Total reps per exercise across all rounds
     };
+
+    function getOrCreateAudioPlayer() {
+        let audioPlayer = document.getElementById('music-player');
+        if (!audioPlayer) {
+            audioPlayer = document.createElement('audio');
+            audioPlayer.id = 'music-player';
+            document.body.appendChild(audioPlayer);
+        }
+        return audioPlayer;
+    }
+
+    function applyMusicVolume() {
+        const audioPlayer = getOrCreateAudioPlayer();
+        audioPlayer.volume = currentMusicVolume;
+    }
 
     // Screen Wake Lock Functions
     async function requestScreenWakeLock() {
@@ -758,58 +790,41 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.getElementById('music-selection').addEventListener('change', function () {
-        const musicChoice = this.value;
-        manageMusic(musicChoice);
-    });
-
-
     function manageMusic(musicChoice) {
         console.log('=== MANAGE MUSIC CALLED ===');
         console.log('Music choice:', musicChoice);
 
-        let audioPlayer = document.getElementById('music-player');
-        console.log('Audio player before:', audioPlayer);
+        const audioPlayer = getOrCreateAudioPlayer();
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
 
-        if (audioPlayer) {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
+        if (!musicChoice) {
+            audioPlayer.removeAttribute('src');
+            audioPlayer.load();
+            return;
         }
 
-        if (musicChoice) {
-            if (!audioPlayer) {
-                console.log('Creating new audio element');
-                audioPlayer = new Audio();
-                audioPlayer.id = 'music-player';
-                document.body.appendChild(audioPlayer);
-            }
-
-            if (musicChoice !== "") {
-                let musicPath = "";
-                if (musicChoice === "popular-mix") {
-                    musicPath = "popular.mp3";
-                } else if (musicChoice === "house") {
-                    musicPath = "house.mp3";
-                } else if (musicChoice === "hiphop") {
-                    musicPath = "hop.mp3";
-                }
-
-                console.log('Setting audio src to:', musicPath);
-                audioPlayer.src = musicPath;
-                audioPlayer.volume = 0.7; // Set initial volume
-                console.log('Audio configured - src:', audioPlayer.src, 'volume:', audioPlayer.volume);
-
-                // Add event listeners for debugging
-                audioPlayer.addEventListener('loadeddata', () => {
-                    console.log('✅ Audio file loaded successfully');
-                }, { once: true });
-
-                audioPlayer.addEventListener('error', (e) => {
-                    console.error('❌ Audio loading error:', e);
-                    console.error('Error details:', audioPlayer.error);
-                }, { once: true });
-            }
+        const musicPath = musicFiles[musicChoice] || '';
+        if (!musicPath) {
+            audioPlayer.removeAttribute('src');
+            audioPlayer.load();
+            return;
         }
+
+        console.log('Setting audio src to:', musicPath);
+        audioPlayer.src = musicPath;
+        applyMusicVolume();
+        console.log('Audio configured - src:', audioPlayer.src, 'volume:', audioPlayer.volume);
+
+        // Add event listeners for debugging
+        audioPlayer.addEventListener('loadeddata', () => {
+            console.log('✅ Audio file loaded successfully');
+        }, { once: true });
+
+        audioPlayer.addEventListener('error', (e) => {
+            console.error('❌ Audio loading error:', e);
+            console.error('Error details:', audioPlayer.error);
+        }, { once: true });
     }
 
     function playCompletionSound() {
@@ -1396,8 +1411,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function playMusic() {
-        let audioPlayer = document.getElementById('music-player');
-        if (audioPlayer && audioPlayer.src) {
+        const audioPlayer = getOrCreateAudioPlayer();
+        if (audioPlayer.src) {
+            applyMusicVolume();
             audioPlayer.play().catch(e => {
                 console.error("Failed to play music:", e);
             });
@@ -1405,12 +1421,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function stopMusic() {
-        let audioPlayer = document.getElementById('music-player');
-        if (audioPlayer) {
-            audioPlayer.pause();
-            audioPlayer.currentTime = 0;
-            console.log("Music stopped");
-        }
+        const audioPlayer = getOrCreateAudioPlayer();
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        console.log("Music stopped");
     }
 
     // Music Controls
@@ -1418,74 +1432,65 @@ document.addEventListener('DOMContentLoaded', function () {
     const musicStopBtn = document.getElementById('music-stop');
     const musicRewindBtn = document.getElementById('music-rewind');
     const musicVolumeSlider = document.getElementById('music-volume');
-    const audioPlayer = document.getElementById('music-player');
 
     if (musicPlayPauseBtn) {
         musicPlayPauseBtn.onclick = function () {
-            if (audioPlayer && audioPlayer.src) {
-                if (audioPlayer.paused) {
-                    audioPlayer.play();
-                    musicPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                } else {
-                    audioPlayer.pause();
-                    musicPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                }
+            const audioPlayer = getOrCreateAudioPlayer();
+            if (!audioPlayer.src) {
+                return;
+            }
+
+            if (audioPlayer.paused) {
+                applyMusicVolume();
+                audioPlayer.play();
+                musicPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audioPlayer.pause();
+                musicPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
             }
         };
     }
 
     if (musicStopBtn) {
         musicStopBtn.onclick = function () {
-            if (audioPlayer) {
-                audioPlayer.pause();
-                audioPlayer.currentTime = 0;
-                if (musicPlayPauseBtn) {
-                    musicPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                }
+            const audioPlayer = getOrCreateAudioPlayer();
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            if (musicPlayPauseBtn) {
+                musicPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
             }
         };
     }
 
     if (musicRewindBtn) {
         musicRewindBtn.onclick = function () {
-            if (audioPlayer) {
-                audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
-            }
+            const audioPlayer = getOrCreateAudioPlayer();
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
         };
     }
 
     if (musicVolumeSlider) {
-        musicVolumeSlider.oninput = function () {
-            if (audioPlayer) {
-                audioPlayer.volume = this.value / 100;
+        const normalizeVolume = (value) => {
+            const numericValue = Number(value);
+            if (Number.isNaN(numericValue)) {
+                return DEFAULT_MUSIC_VOLUME;
             }
+            return Math.min(Math.max(numericValue, 0), 100) / 100;
         };
-        // Set initial volume
-        if (audioPlayer) {
-            audioPlayer.volume = 0.7;
-        }
+
+        currentMusicVolume = normalizeVolume(musicVolumeSlider.value);
+        applyMusicVolume();
+
+        musicVolumeSlider.addEventListener('input', function () {
+            currentMusicVolume = normalizeVolume(this.value);
+            applyMusicVolume();
+        });
+    } else {
+        applyMusicVolume();
     }
 
     // Music Selection
     const musicSelection = document.getElementById('music-selection');
-
-    // Music file mapping
-    const musicFiles = {
-        'popular-mix': 'popular.mp3',
-        'hiphop': 'hop.mp3',
-        'house': 'house.mp3'
-    };
-
-    // Track display names
-    const trackNames = {
-        'popular-mix': 'Popular',
-        'hiphop': 'Hip-Hop',
-        'house': 'House',
-        '': 'No Music'
-    };
-
-    // Array of music options for cycling
-    const musicOptions = ['popular-mix', 'hiphop', 'house', ''];
 
     // Function to update change track button text
     function updateChangeTrackButton() {
@@ -1498,26 +1503,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (musicSelection) {
-        musicSelection.onchange = function () {
-            const selectedMusic = this.value;
-            if (selectedMusic && musicFiles[selectedMusic]) {
-                audioPlayer.src = musicFiles[selectedMusic];
-                console.log('Music loaded:', musicFiles[selectedMusic]);
-            } else {
-                audioPlayer.src = '';
-                console.log('No music selected');
-            }
-            // Update change track button to show current track
+        musicSelection.addEventListener('change', function () {
+            manageMusic(this.value);
             updateChangeTrackButton();
-        };
+        });
 
-        // Initialize button text on page load
         updateChangeTrackButton();
+        manageMusic(musicSelection.value);
     }
 
     // Change Track Button - Cycles through available tracks
     const changeTrackBtn = document.getElementById('music-change-track');
-    if (changeTrackBtn) {
+    if (changeTrackBtn && musicSelection) {
         changeTrackBtn.addEventListener('click', function () {
             const currentTrack = musicSelection.value;
             const currentIndex = musicOptions.indexOf(currentTrack);
@@ -1529,23 +1526,19 @@ document.addEventListener('DOMContentLoaded', function () {
             // Update selection
             musicSelection.value = nextTrack;
 
-            // Trigger change event to load new track (this will also update button text)
-            if (musicSelection.onchange) {
-                musicSelection.onchange();
-            } else {
-                // Fallback if onchange not set
-                const event = new Event('change');
-                musicSelection.dispatchEvent(event);
-                updateChangeTrackButton();
-            }
+            // Trigger change event to load new track and sync UI
+            const event = new Event('change');
+            musicSelection.dispatchEvent(event);
 
             // If music is playing, restart with new track
-            if (audioPlayer && !audioPlayer.paused) {
+            const audioPlayer = getOrCreateAudioPlayer();
+            if (!audioPlayer.paused) {
                 audioPlayer.currentTime = 0;
+                applyMusicVolume();
                 audioPlayer.play().catch(e => {
                     console.error('Failed to play new track:', e);
                 });
-            } else if (audioPlayer && audioPlayer.src) {
+            } else if (audioPlayer.src) {
                 // If paused, just load the new track
                 audioPlayer.currentTime = 0;
             }
