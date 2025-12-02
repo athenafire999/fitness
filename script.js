@@ -256,12 +256,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleCustomExerciseSelection() {
         const workoutType = document.getElementById('workout-type').value;
         const customSelection = document.getElementById('custom-exercise-selection');
+        const workoutGenerator = document.getElementById('workout-generator');
 
         if (workoutType === 'customize') {
             customSelection.classList.remove('hidden');
+            workoutGenerator.classList.add('customize-mode');
             initializeCustomExerciseSelection();
         } else {
             customSelection.classList.add('hidden');
+            workoutGenerator.classList.remove('customize-mode');
         }
     }
 

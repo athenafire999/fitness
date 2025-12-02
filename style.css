@@ -1895,10 +1895,26 @@ video {
         margin-right: auto !important;
         min-height: calc(100vh - 20px);
         min-height: calc(100dvh - 20px);
+        max-height: none;
+        height: auto;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 16px;
+        overflow-y: auto;
+    }
+    
+    /* When customize is selected, allow card to grow */
+    #workout-generator.customize-mode,
+    #workout-generator:has(#custom-exercise-selection:not(.hidden)) {
+        min-height: auto;
+        justify-content: flex-start;
+    }
+    
+    /* Smaller video when in customize mode */
+    #workout-generator.customize-mode .video-container,
+    #workout-generator:has(#custom-exercise-selection:not(.hidden)) .video-container {
+        max-height: 140px;
     }
 }
 
@@ -1909,5 +1925,15 @@ video {
         min-height: calc(100vh - 12px);
         min-height: calc(100dvh - 12px);
         padding: 12px;
+    }
+    
+    #workout-generator.customize-mode,
+    #workout-generator:has(#custom-exercise-selection:not(.hidden)) {
+        min-height: auto;
+    }
+    
+    #workout-generator.customize-mode .video-container,
+    #workout-generator:has(#custom-exercise-selection:not(.hidden)) .video-container {
+        max-height: 120px;
     }
 }
