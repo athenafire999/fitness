@@ -1402,28 +1402,52 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Exercise Spotlight Animation
-    function showExerciseSpotlight(exerciseName, reps, duration = 3000) {
+    function showExerciseSpotlight(exerciseName, reps, duration = 3000, nextExercise = null, nextReps = null) {
         const spotlight = document.getElementById('exercise-spotlight');
         const spotlightReps = document.getElementById('spotlight-reps');
         const spotlightName = document.getElementById('spotlight-name');
         
         if (!spotlight || !spotlightReps || !spotlightName) return;
         
-        // Set content
+        // Set content for current exercise
         spotlightReps.textContent = reps;
         spotlightName.textContent = exerciseName;
         
         // Show spotlight
         spotlight.classList.remove('hidden', 'fade-out');
         
-        // Hide after duration
-        setTimeout(() => {
-            spotlight.classList.add('fade-out');
+        // If there's a next exercise, show it after current
+        if (nextExercise && nextReps) {
+            // Show current exercise for half the duration
             setTimeout(() => {
-                spotlight.classList.add('hidden');
-                spotlight.classList.remove('fade-out');
-            }, 300);
-        }, duration);
+                // Fade out current
+                spotlight.classList.add('fade-out');
+                setTimeout(() => {
+                    // Show "Coming Up Next" exercise
+                    spotlightReps.textContent = nextReps;
+                    spotlightName.textContent = 'Next: ' + nextExercise;
+                    spotlight.classList.remove('fade-out');
+                    
+                    // Hide after remaining duration
+                    setTimeout(() => {
+                        spotlight.classList.add('fade-out');
+                        setTimeout(() => {
+                            spotlight.classList.add('hidden');
+                            spotlight.classList.remove('fade-out');
+                        }, 300);
+                    }, duration / 2);
+                }, 300);
+            }, duration / 2);
+        } else {
+            // No next exercise, just hide after duration
+            setTimeout(() => {
+                spotlight.classList.add('fade-out');
+                setTimeout(() => {
+                    spotlight.classList.add('hidden');
+                    spotlight.classList.remove('fade-out');
+                }, 300);
+            }, duration);
+        }
     }
 
     function announceAllExercisesInRound() {
@@ -1467,8 +1491,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const nextReps = exerciseReps[nextExercise];
                     const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
-                    // Show spotlight animation
-                    showExerciseSpotlight(exercise, reps, 3500);
+                    // Show spotlight animation with next exercise
+                    showExerciseSpotlight(exercise, reps, 4000, nextExercise, nextReps);
 
                     speakText(`First exercise: ${exercise}. Do ${reps} ${repText}. Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
                         rate: 0.95,
@@ -1486,8 +1510,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     const nextReps = exerciseReps[nextExercise];
                     const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
-                    // Show spotlight animation
-                    showExerciseSpotlight(exercise, reps, 3500);
+                    // Show spotlight animation with next exercise
+                    showExerciseSpotlight(exercise, reps, 4000, nextExercise, nextReps);
 
                     speakText(`Exercise ${index + 1}: ${exercise}. Do ${reps} ${repText}. Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
                         rate: 0.95,
