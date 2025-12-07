@@ -1401,6 +1401,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Exercise Spotlight Animation
+    function showExerciseSpotlight(exerciseName, reps, duration = 3000) {
+        const spotlight = document.getElementById('exercise-spotlight');
+        const spotlightReps = document.getElementById('spotlight-reps');
+        const spotlightName = document.getElementById('spotlight-name');
+        
+        if (!spotlight || !spotlightReps || !spotlightName) return;
+        
+        // Set content
+        spotlightReps.textContent = reps;
+        spotlightName.textContent = exerciseName;
+        
+        // Show spotlight
+        spotlight.classList.remove('hidden', 'fade-out');
+        
+        // Hide after duration
+        setTimeout(() => {
+            spotlight.classList.add('fade-out');
+            setTimeout(() => {
+                spotlight.classList.add('hidden');
+                spotlight.classList.remove('fade-out');
+            }, 300);
+        }, duration);
+    }
+
     function announceAllExercisesInRound() {
         if (!document.getElementById('tts-enabled').checked) return;
 
@@ -1442,6 +1467,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const nextReps = exerciseReps[nextExercise];
                     const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
+                    // Show spotlight animation
+                    showExerciseSpotlight(exercise, reps, 3500);
+
                     speakText(`First exercise: ${exercise}. Do ${reps} ${repText}. Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
                         rate: 0.95,
                         pitch: 0,
@@ -1458,6 +1486,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     const nextReps = exerciseReps[nextExercise];
                     const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
+                    // Show spotlight animation
+                    showExerciseSpotlight(exercise, reps, 3500);
+
                     speakText(`Exercise ${index + 1}: ${exercise}. Do ${reps} ${repText}. Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
                         rate: 0.95,
                         pitch: 0,
@@ -1470,6 +1501,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Final exercise announcement
                 const timeoutId = setTimeout(() => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
+                    
+                    // Show spotlight animation
+                    showExerciseSpotlight(exercise, reps, 3500);
+                    
                     speakText(`Final exercise: ${exercise}. Do ${reps} ${repText}.`, {
                         rate: 0.95,
                         pitch: 0,
