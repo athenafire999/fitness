@@ -1112,11 +1112,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (musicChoice !== "") {
                 let musicPath = "";
                 if (musicChoice === "popular-mix") {
-                    musicPath = "popular.mp3";
+                    musicPath = "Popular_music.mp3";
                 } else if (musicChoice === "house") {
-                    musicPath = "house.mp3";
+                    musicPath = "House_music.mp3";
                 } else if (musicChoice === "hiphop") {
-                    musicPath = "hop.mp3";
+                    musicPath = "Hip_Hop.mp3";
                 }
 
                 console.log('Setting audio src to:', musicPath);
@@ -2048,9 +2048,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Music file mapping
     const musicFiles = {
-        'popular-mix': 'popular.mp3',
-        'hiphop': 'hop.mp3',
-        'house': 'house.mp3'
+        'popular-mix': 'Popular_music.mp3',
+        'hiphop': 'Hip_Hop.mp3',
+        'house': 'House_music.mp3'
     };
 
     // Track display names
