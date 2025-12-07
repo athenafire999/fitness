@@ -371,49 +371,49 @@ document.addEventListener('DOMContentLoaded', function () {
     const nextRoundSlider = document.getElementById('next-round-slider');
     const sliderFill = document.getElementById('slider-fill');
     let isSliding = false;
-    
+
     // Function to trigger next round (used by slider and voice command)
     function triggerNextRound() {
         if (isSliding) return; // Prevent double trigger
-        isSliding = true;
+            isSliding = true;
 
-        // Stop all TTS announcements and clear pending timeouts
-        stopTTS();
+            // Stop all TTS announcements and clear pending timeouts
+            stopTTS();
 
-        // Store the completed round number before nextRound() increments it
-        const completedRound = currentRound;
+            // Store the completed round number before nextRound() increments it
+            const completedRound = currentRound;
 
-        // Announce the round is complete (before moving to next round)
-        if (completedRound > 0) {
-            announceRoundComplete(completedRound);
-        }
-
-        // Check if this is the last round before proceeding
-        const isLastRound = completedRound === totalRounds;
-
-        // Wait a moment, then proceed to next round
-        setTimeout(() => {
-            if (!isLastRound) {
-                nextRound(); // Proceed to the next round (this increments currentRound)
-                // Announce round start and then exercises (same format as first round)
-                announceNextRound(currentRound);
-                // Announce exercises after round start announcement
-                setTimeout(() => {
-                    announceAllExercisesInRound();
-                }, 2000); // 2 second delay to let round announcement finish first
-            } else {
-                // Last round completed, show finish button
-                document.getElementById('active-controls').classList.add('hidden');
-                document.getElementById('finish-workout-button').classList.remove('hidden');
+            // Announce the round is complete (before moving to next round)
+            if (completedRound > 0) {
+                announceRoundComplete(completedRound);
             }
-        }, 1500); // 1.5 second delay to let round complete announcement finish
 
-        // Reset slider after a short delay
-        setTimeout(() => {
+            // Check if this is the last round before proceeding
+            const isLastRound = completedRound === totalRounds;
+
+            // Wait a moment, then proceed to next round
+            setTimeout(() => {
+                if (!isLastRound) {
+                    nextRound(); // Proceed to the next round (this increments currentRound)
+                    // Announce round start and then exercises (same format as first round)
+                    announceNextRound(currentRound);
+                    // Announce exercises after round start announcement
+                    setTimeout(() => {
+                        announceAllExercisesInRound();
+                    }, 2000); // 2 second delay to let round announcement finish first
+                } else {
+                    // Last round completed, show finish button
+                    document.getElementById('active-controls').classList.add('hidden');
+                    document.getElementById('finish-workout-button').classList.remove('hidden');
+                }
+            }, 1500); // 1.5 second delay to let round complete announcement finish
+
+            // Reset slider after a short delay
+            setTimeout(() => {
             nextRoundSlider.value = 0;
-            sliderFill.style.width = '0%';
-            isSliding = false;
-        }, 2000);
+                sliderFill.style.width = '0%';
+                isSliding = false;
+            }, 2000);
     }
 
     nextRoundSlider.addEventListener('input', function () {
@@ -1401,53 +1401,31 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Exercise Spotlight Animation
-    function showExerciseSpotlight(exerciseName, reps, duration = 3000, nextExercise = null, nextReps = null) {
+    // Exercise Spotlight Animation - simple show/hide
+    function showExerciseSpotlight(exerciseName, reps, isNext = false) {
         const spotlight = document.getElementById('exercise-spotlight');
         const spotlightReps = document.getElementById('spotlight-reps');
         const spotlightName = document.getElementById('spotlight-name');
         
         if (!spotlight || !spotlightReps || !spotlightName) return;
         
-        // Set content for current exercise
+        // Set content
         spotlightReps.textContent = reps;
-        spotlightName.textContent = exerciseName;
+        spotlightName.textContent = isNext ? 'Next: ' + exerciseName : exerciseName;
         
         // Show spotlight
         spotlight.classList.remove('hidden', 'fade-out');
+    }
+    
+    function hideExerciseSpotlight() {
+        const spotlight = document.getElementById('exercise-spotlight');
+        if (!spotlight) return;
         
-        // If there's a next exercise, show it after current
-        if (nextExercise && nextReps) {
-            // Show current exercise for half the duration
-            setTimeout(() => {
-                // Fade out current
-                spotlight.classList.add('fade-out');
-                setTimeout(() => {
-                    // Show "Coming Up Next" exercise
-                    spotlightReps.textContent = nextReps;
-                    spotlightName.textContent = 'Next: ' + nextExercise;
-                    spotlight.classList.remove('fade-out');
-                    
-                    // Hide after remaining duration
-                    setTimeout(() => {
-                        spotlight.classList.add('fade-out');
-                        setTimeout(() => {
-                            spotlight.classList.add('hidden');
-                            spotlight.classList.remove('fade-out');
-                        }, 300);
-                    }, duration / 2);
-                }, 300);
-            }, duration / 2);
-        } else {
-            // No next exercise, just hide after duration
-            setTimeout(() => {
-                spotlight.classList.add('fade-out');
-                setTimeout(() => {
-                    spotlight.classList.add('hidden');
-                    spotlight.classList.remove('fade-out');
-                }, 300);
-            }, duration);
-        }
+        spotlight.classList.add('fade-out');
+        setTimeout(() => {
+            spotlight.classList.add('hidden');
+            spotlight.classList.remove('fade-out');
+        }, 300);
     }
 
     function announceAllExercisesInRound() {
@@ -1485,56 +1463,75 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (isFirstExercise) {
                 // First exercise announcement with next exercise
-                const timeoutId = setTimeout(() => {
+                const timeoutId = setTimeout(async () => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
                     const nextExercise = selectedExercises[1];
                     const nextReps = exerciseReps[nextExercise];
                     const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
-                    // Show spotlight animation with next exercise
-                    showExerciseSpotlight(exercise, reps, 4000, nextExercise, nextReps);
+                    // Show spotlight for current exercise
+                    showExerciseSpotlight(exercise, reps, false);
 
-                    speakText(`First exercise: ${exercise}. Do ${reps} ${repText}. Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
-                        rate: 0.95,
-                        pitch: 0,
-                        volume: 0.7,
-                        lang: 'en-GB'
+                    // Speak current exercise and wait
+                    await speakText(`First exercise: ${exercise}. Do ${reps} ${repText}.`, {
+                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
                     });
-                }, 1000); // Short delay for first exercise
+                    
+                    // Show spotlight for next exercise
+                    showExerciseSpotlight(nextExercise, nextReps, true);
+                    
+                    // Speak next exercise and wait
+                    await speakText(`Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
+                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
+                    });
+                    
+                    // Hide spotlight
+                    hideExerciseSpotlight();
+                }, 1000);
                 announcementTimeouts.push(timeoutId);
             } else if (!isLastExercise) {
                 // Middle exercises with next exercise
-                const timeoutId = setTimeout(() => {
+                const timeoutId = setTimeout(async () => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
                     const nextExercise = selectedExercises[index + 1];
                     const nextReps = exerciseReps[nextExercise];
                     const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
-                    // Show spotlight animation with next exercise
-                    showExerciseSpotlight(exercise, reps, 4000, nextExercise, nextReps);
+                    // Show spotlight for current exercise
+                    showExerciseSpotlight(exercise, reps, false);
 
-                    speakText(`Exercise ${index + 1}: ${exercise}. Do ${reps} ${repText}. Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
-                        rate: 0.95,
-                        pitch: 0,
-                        volume: 0.7,
-                        lang: 'en-GB'
+                    // Speak current exercise and wait
+                    await speakText(`Exercise ${index + 1}: ${exercise}. Do ${reps} ${repText}.`, {
+                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
                     });
+                    
+                    // Show spotlight for next exercise
+                    showExerciseSpotlight(nextExercise, nextReps, true);
+                    
+                    // Speak next exercise and wait
+                    await speakText(`Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
+                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
+                    });
+                    
+                    // Hide spotlight
+                    hideExerciseSpotlight();
                 }, cumulativeTime);
                 announcementTimeouts.push(timeoutId);
             } else {
                 // Final exercise announcement
-                const timeoutId = setTimeout(() => {
+                const timeoutId = setTimeout(async () => {
                     const repText = reps === 1 ? "repetition" : "repetitions";
                     
-                    // Show spotlight animation
-                    showExerciseSpotlight(exercise, reps, 3500);
+                    // Show spotlight for final exercise
+                    showExerciseSpotlight(exercise, reps, false);
                     
-                    speakText(`Final exercise: ${exercise}. Do ${reps} ${repText}.`, {
-                        rate: 0.95,
-                        pitch: 0,
-                        volume: 0.7,
-                        lang: 'en-GB'
+                    // Speak and wait
+                    await speakText(`Final exercise: ${exercise}. Do ${reps} ${repText}.`, {
+                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
                     });
+                    
+                    // Hide spotlight
+                    hideExerciseSpotlight();
                 }, cumulativeTime);
                 announcementTimeouts.push(timeoutId);
             }
@@ -1918,7 +1915,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (gainNode && audioContext) {
                         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
                     }
-                    if (audioPlayer) {
+        if (audioPlayer) {
                         audioPlayer.volume = 0;
                     }
                     isMuted = true;
