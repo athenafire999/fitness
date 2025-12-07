@@ -15,9 +15,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let isScreenLockActive = false;
 
     const exerciseCategories = {
-        'Full Body': ['squats', 'Crunches', 'Plank knee taps', 'Shoulder press ups', 'Mountain climbers', 'Wide press ups', 'Press up walk out', 'Plank up & down', 'Superman', 'Jump squats', 'Burpees press ups', 'Dips', 'Lunges', 'Situps hands to wall', 'Diamond Press Ups', 'Situps crunches', 'Situps knife Jacks', 'Russian twist', 'Leg raises', 'Pressup claps', 'Over sit ups'],
+        'Full Body': ['squats', 'Crunches', 'Plank knee taps', 'Shoulder press ups', 'Mountain climbers', 'Wide press ups', 'Press up walk out', 'Plank up & down', 'Superman', 'Jump squats', 'Burpees press ups', 'Dips', 'Lunges', 'Situps hands to wall', 'Diamond Press Ups', 'Situps crunches', 'Situps knife Jacks', 'Russian twist', 'Leg raises', 'Press up claps', 'Over sit ups'],
         'Abs': ['Elbow to knees', 'ankle taps', 'Crunches', 'Plank knee taps', 'Plank up & down', 'Superman', 'Situps hands to wall', 'Situps crunches', 'Situps knife Jacks', 'Russian twist', 'Leg raises', 'Over sit ups'],
-        'Arms': ['mid body press ups', 'touch knee press up', 'side to side walk outs', 'wide side to sides', 'single arm press ups', 'close press ups', 'Shoulder press ups', 'Wide press ups', 'Press up walk out', 'Dips', 'Diamond Press Ups', 'Pressup claps'],
+        'Arms': ['mid body press ups', 'touch knee press up', 'side to side walk outs', 'wide side to sides', 'single arm press ups', 'close press ups', 'Shoulder press ups', 'Wide press ups', 'Press up walk out', 'Dips', 'Diamond Press Ups', 'Press up claps'],
         'Legs': ['Squats', 'Lunges', 'Calf Raises', 'High Knees', 'Side Lunges']
     };
     let selectedExercises = [];
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Exercise categories for filtering
     const exercisesByCategory = {
-        upper: ['Shoulder press ups', 'Wide press ups', 'Diamond Press Ups', 'Pressup claps', 'Dips', 'Press up walk out'],
+        upper: ['Shoulder press ups', 'Wide press ups', 'Diamond Press Ups', 'Press up claps', 'Dips', 'Press up walk out'],
         core: ['Crunches', 'Plank knee taps', 'Plank up & down', 'Superman', 'Situps hands to wall', 'Situps crunches', 'Situps knife Jacks', 'Russian twist', 'Leg raises', 'Over sit ups'],
         lower: ['squats', 'Lunges', 'Jump squats', 'Mountain climbers', 'Burpees press ups'],
         cardio: ['Burpees press ups', 'Jump squats', 'Mountain climbers']
