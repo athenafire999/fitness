@@ -363,11 +363,49 @@ input[type="text"]:focus {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--shadow-lg);
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     background-color: #000;
     aspect-ratio: 16/9;
     border: var(--glass-border);
     box-sizing: border-box;
+}
+
+/* Stretch Reminder */
+.stretch-reminder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    color: #fbbf24;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.stretch-reminder i {
+    animation: bounce-up 1.5s ease-in-out infinite;
+}
+
+@keyframes bounce-up {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* Desktop: arrow points left toward video */
+@media (min-width: 900px) {
+    .stretch-reminder i {
+        transform: rotate(-90deg);
+        animation: bounce-left 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes bounce-left {
+        0%, 100% { transform: rotate(-90deg) translateY(0); }
+        50% { transform: rotate(-90deg) translateY(-4px); }
+    }
 }
 
 video {
