@@ -52,7 +52,7 @@ body {
     max-width: 1200px;
     max-height: 100vh;
     padding: 10px;
-    margin: 0;
+    margin: 0 auto;
     animation: fadeIn 0.8s ease-out;
     overflow-y: auto;
     box-sizing: border-box;
@@ -145,6 +145,21 @@ body {
     #regenerate-workout-button {
         padding: 12px 14px;
         font-size: 0.9rem;
+    }
+}
+
+/* Desktop centering for cards */
+@media (min-width: 769px) {
+    body.container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    
+    .card {
+        max-width: 900px;
+        margin: 0 auto;
     }
 }
 
