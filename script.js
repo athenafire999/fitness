@@ -1122,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.log('Setting audio src to:', musicPath);
                 audioPlayer.crossOrigin = 'anonymous';  // Required for Web Audio API
                 audioPlayer.src = musicPath;
-                audioPlayer.volume = 0.7; // Set initial volume
+                audioPlayer.volume = 0.69; // Set initial volume
                 console.log('Audio configured - src:', audioPlayer.src, 'volume:', audioPlayer.volume);
 
                 // Add event listeners for debugging
@@ -1741,7 +1741,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Mute state tracking
     let isMuted = false;
-    let volumeBeforeMute = 0.7;
+    let volumeBeforeMute = 0.69;
     
     // Web Audio API for mobile volume control (iOS doesn't allow programmatic volume changes)
     let audioContext = null;
