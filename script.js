@@ -515,16 +515,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 voiceControlBtn.title = 'Heard: "' + transcript + '"';
             }
             
-            // Check for "next round" or similar commands (only on final results to avoid double triggers)
+            // Check for "let's go" command (only on final results to avoid double triggers)
             if (isFinal) {
-                if (transcript.includes('next round') || 
-                    transcript.includes('next') || 
-                    transcript.includes('done') ||
-                    transcript.includes('finished') ||
-                    transcript.includes('complete') ||
-                    transcript.includes('round') ||
-                    transcript.includes('go')) {
-                    console.log('🎤 Next round voice command detected!');
+                if (transcript.includes("let's go") || 
+                    transcript.includes("lets go") ||
+                    transcript.includes("let go")) {
+                    console.log('🎤 "Let\'s go" command detected!');
                     // Visual feedback
                     if (voiceControlBtn) {
                         voiceControlBtn.style.background = 'rgba(16, 185, 129, 0.8)';
@@ -1081,6 +1077,37 @@ document.addEventListener('DOMContentLoaded', function () {
     let isAnnouncing = false;
     let announcementTimeouts = []; // Track all announcement timeouts for cleanup
 
+    // Track if we should resume voice recognition after TTS
+    let shouldResumeVoiceAfterTTS = false;
+    
+    function pauseVoiceForTTS() {
+        if (isVoiceListening && voiceRecognition) {
+            shouldResumeVoiceAfterTTS = true;
+            try {
+                voiceRecognition.stop();
+                console.log('🎤 Paused voice recognition for TTS');
+            } catch (e) {
+                console.log('Error pausing voice:', e);
+            }
+        }
+    }
+    
+    function resumeVoiceAfterTTS() {
+        if (shouldResumeVoiceAfterTTS) {
+            shouldResumeVoiceAfterTTS = false;
+            setTimeout(() => {
+                if (isVoiceListening) {
+                    try {
+                        voiceRecognition.start();
+                        console.log('🎤 Resumed voice recognition after TTS');
+                    } catch (e) {
+                        console.log('Error resuming voice:', e);
+                    }
+                }
+            }, 500); // Small delay after TTS ends
+        }
+    }
+
     function speakText(text, options = {}) {
         console.log('TTS: Attempting to speak:', text);
 
@@ -1094,8 +1121,15 @@ document.addEventListener('DOMContentLoaded', function () {
     async function processSpeechQueue() {
         // Only process if not currently speaking and queue has items
         if (isSpeaking || speechQueue.length === 0) {
+            // If queue is empty and not speaking, resume voice recognition
+            if (speechQueue.length === 0 && !isSpeaking) {
+                resumeVoiceAfterTTS();
+            }
             return;
         }
+        
+        // Pause voice recognition while speaking
+        pauseVoiceForTTS();
 
         const { text, options, resolve, reject } = speechQueue.shift();
         isSpeaking = true;
