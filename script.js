@@ -177,78 +177,168 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Update exercise limit info display
+    // Exercise categories for filtering
+    const exercisesByCategory = {
+        upper: ['Push-ups', 'Tricep Dips', 'Diamond Push-ups', 'Wide Push-ups', 'Pike Push-ups', 'Arm Circles'],
+        core: ['Crunches', 'Plank', 'Mountain Climbers', 'Bicycle Crunches', 'Leg Raises', 'Russian Twists', 'Dead Bug', 'Flutter Kicks', 'V-ups', 'Toe Touches'],
+        lower: ['Squats', 'Lunges', 'Jumping Jacks', 'High Knees', 'Glute Bridges', 'Calf Raises', 'Side Lunges', 'Wall Sit', 'Donkey Kicks', 'Fire Hydrants'],
+        cardio: ['Burpees', 'Jumping Jacks', 'High Knees', 'Mountain Climbers', 'Jump Squats', 'Star Jumps']
+    };
+
+    let currentCategory = 'all';
+
+    // Update exercise limit display
     function updateExerciseLimitInfo() {
         const limit = getExerciseLimit();
-        const difficultyText = document.getElementById('difficulty').selectedOptions[0].text;
-        document.getElementById('exercise-limit-info').textContent =
-            `${difficultyText}: Select exactly ${limit} exercises for your custom workout`;
+        document.getElementById('limit-count').textContent = limit;
     }
 
-    // Initialize custom exercise selection
+    // Initialize custom exercise selection with chips
     function initializeCustomExerciseSelection() {
-        const exerciseGrid = document.getElementById('exercise-checkboxes');
-        const allExercises = [...exerciseCategories['Full Body'], ...customExerciseList];
-
-        exerciseGrid.innerHTML = allExercises.map(exercise => `
-            <div class="exercise-checkbox-item">
-                <input type="checkbox" id="exercise-${exercise.replace(/\s+/g, '-').toLowerCase()}" value="${exercise}">
-                <label for="exercise-${exercise.replace(/\s+/g, '-').toLowerCase()}">${exercise}</label>
-            </div>
-        `).join('');
-
+        renderExerciseChips();
         updateExerciseCount();
         updateExerciseLimitInfo();
     }
+
+    // Render exercise chips based on current category
+    function renderExerciseChips() {
+        const chipsContainer = document.getElementById('exercise-chips');
+        let exercises = [];
+        
+        if (currentCategory === 'all') {
+            exercises = [...exerciseCategories['Full Body']];
+        } else if (currentCategory === 'custom') {
+            exercises = [];
+        } else {
+            exercises = exercisesByCategory[currentCategory] || [];
+        }
+        
+        // Add custom exercises for 'all' and 'custom' categories
+        if (currentCategory === 'all' || currentCategory === 'custom') {
+            exercises = [...exercises, ...customExerciseList];
+        }
+
+        if (exercises.length === 0 && currentCategory === 'custom') {
+            chipsContainer.innerHTML = `
+                <div class="exercise-chips-empty">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>No custom exercises yet.<br>Add your own below!</span>
+                </div>
+            `;
+            return;
+        }
+
+        chipsContainer.innerHTML = exercises.map(exercise => {
+            const isSelected = customSelectedExercises.includes(exercise);
+            const isCustom = customExerciseList.includes(exercise);
+            const chipClass = `exercise-chip${isSelected ? ' selected' : ''}${isCustom ? ' custom-added' : ''}`;
+            
+            return `
+                <div class="${chipClass}" data-exercise="${exercise}">
+                    <span>${exercise}</span>
+                    ${isCustom ? `<button class="remove-custom" data-remove="${exercise}" title="Remove"><i class="fas fa-times"></i></button>` : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Handle chip click
+    document.addEventListener('click', function(e) {
+        const chip = e.target.closest('.exercise-chip');
+        if (!chip) return;
+        
+        // Ignore if clicking the remove button
+        if (e.target.closest('.remove-custom')) {
+            const exerciseName = e.target.closest('.remove-custom').dataset.remove;
+            removeCustomExercise(exerciseName);
+            return;
+        }
+
+        const exercise = chip.dataset.exercise;
+        const limit = getExerciseLimit();
+        
+        if (chip.classList.contains('selected')) {
+            chip.classList.remove('selected');
+            customSelectedExercises = customSelectedExercises.filter(e => e !== exercise);
+        } else {
+            if (customSelectedExercises.length < limit) {
+                chip.classList.add('selected');
+                customSelectedExercises.push(exercise);
+            } else {
+                // Visual feedback that limit is reached
+                const pill = document.getElementById('exercise-count');
+                pill.classList.add('over-limit');
+                setTimeout(() => pill.classList.remove('over-limit'), 500);
+            }
+        }
+        updateExerciseCount();
+    });
+
+    // Handle tab clicks
+    document.addEventListener('click', function(e) {
+        const tab = e.target.closest('.tab-btn');
+        if (!tab) return;
+        
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentCategory = tab.dataset.category;
+        renderExerciseChips();
+    });
 
     // Add custom exercise
     function addCustomExercise() {
         const input = document.getElementById('custom-exercise-input');
         const exerciseName = input.value.trim();
 
-        if (!exerciseName) {
-            alert('Please enter an exercise name.');
-            return;
-        }
+        if (!exerciseName) return;
 
-        if (customExerciseList.includes(exerciseName)) {
-            alert('This exercise already exists.');
-            return;
-        }
-
-        // Check if it's already in the main exercise list
+        // Check if already exists
         const allExercises = [...exerciseCategories['Full Body'], ...customExerciseList];
-        if (allExercises.includes(exerciseName)) {
-            alert('This exercise already exists.');
+        if (allExercises.some(e => e.toLowerCase() === exerciseName.toLowerCase())) {
+            input.classList.add('error');
+            setTimeout(() => input.classList.remove('error'), 500);
             return;
         }
 
         customExerciseList.push(exerciseName);
         input.value = '';
-        initializeCustomExerciseSelection();
+        
+        // Auto-select the new exercise if under limit
+        const limit = getExerciseLimit();
+        if (customSelectedExercises.length < limit) {
+            customSelectedExercises.push(exerciseName);
+        }
+        
+        // Stay on current tab, just re-render if on 'all' or 'custom'
+        if (currentCategory === 'all' || currentCategory === 'custom') {
+            renderExerciseChips();
+        }
+        updateExerciseCount();
+    }
+
+    // Remove custom exercise
+    function removeCustomExercise(exerciseName) {
+        customExerciseList = customExerciseList.filter(e => e !== exerciseName);
+        customSelectedExercises = customSelectedExercises.filter(e => e !== exerciseName);
+        renderExerciseChips();
+        updateExerciseCount();
     }
 
     // Update exercise count display
     function updateExerciseCount() {
-        const checkboxes = document.querySelectorAll('#exercise-checkboxes input[type="checkbox"]:checked');
-        const count = checkboxes.length;
+        const count = customSelectedExercises.length;
         const limit = getExerciseLimit();
 
-        document.getElementById('exercise-count').innerHTML =
-            `Selected: ${count}/${limit} exercises`;
+        document.getElementById('selected-count').textContent = count;
+        document.getElementById('limit-count').textContent = limit;
 
-        // Update custom selected exercises array
-        customSelectedExercises = Array.from(checkboxes).map(cb => cb.value);
-
-        // Change color based on limit
-        const countElement = document.getElementById('exercise-count');
-        countElement.classList.remove('at-limit', 'over-limit', 'under-limit');
+        // Update pill styling
+        const pill = document.getElementById('exercise-count');
+        pill.classList.remove('at-limit', 'over-limit');
         if (count === limit) {
-            countElement.classList.add('at-limit');
+            pill.classList.add('at-limit');
         } else if (count > limit) {
-            countElement.classList.add('over-limit');
-        } else {
-            countElement.classList.add('under-limit');
+            pill.classList.add('over-limit');
         }
     }
 
@@ -261,6 +351,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (workoutType === 'customize') {
             customSelection.classList.remove('hidden');
             workoutGenerator.classList.add('customize-mode');
+            currentCategory = 'all';
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab-btn[data-category="all"]').classList.add('active');
             initializeCustomExerciseSelection();
         } else {
             customSelection.classList.add('hidden');
@@ -285,28 +378,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    document.getElementById('select-all-exercises').addEventListener('click', function () {
-        const limit = getExerciseLimit();
-        const checkboxes = document.querySelectorAll('#exercise-checkboxes input[type="checkbox"]');
-
-        // Only select up to the limit
-        checkboxes.forEach((cb, index) => {
-            cb.checked = index < limit;
-        });
-        updateExerciseCount();
-    });
-
     document.getElementById('clear-all-exercises').addEventListener('click', function () {
-        const checkboxes = document.querySelectorAll('#exercise-checkboxes input[type="checkbox"]');
-        checkboxes.forEach(cb => cb.checked = false);
+        customSelectedExercises = [];
+        renderExerciseChips();
         updateExerciseCount();
-    });
-
-    // Add event listeners to exercise checkboxes
-    document.addEventListener('change', function (e) {
-        if (e.target.matches('#exercise-checkboxes input[type="checkbox"]')) {
-            updateExerciseCount();
-        }
     });
 
     document.getElementById('create-workout-button').addEventListener('click', function () {

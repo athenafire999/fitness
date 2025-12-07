@@ -10,7 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=7">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
@@ -58,28 +58,39 @@
 
         <!-- Custom Exercise Selection (hidden by default) -->
         <div id="custom-exercise-selection" class="custom-exercise-selection hidden">
-            <h3>Select Your Exercises</h3>
-            <div id="exercise-limit-info" class="exercise-limit-info">
-                <!-- Exercise limit will be populated by JavaScript -->
-            </div>
-
-            <!-- Add Custom Exercise Input -->
-            <div class="add-custom-exercise">
-                <h4>Add Your Own Exercise:</h4>
-                <div class="add-exercise-row">
-                    <input type="text" id="custom-exercise-input" placeholder="Enter exercise name..." class="custom-exercise-input">
-                    <button id="add-custom-exercise-btn" class="button button-inline button-primary">Add</button>
+            <div class="customize-header">
+                <h3><i class="fas fa-dumbbell"></i> Build Your Workout</h3>
+                <div id="exercise-count" class="exercise-pill">
+                    <span id="selected-count">0</span>/<span id="limit-count">5</span>
                 </div>
             </div>
+            
+            <div class="customize-tabs">
+                <button class="tab-btn active" data-category="all">All</button>
+                <button class="tab-btn" data-category="upper">Upper</button>
+                <button class="tab-btn" data-category="core">Core</button>
+                <button class="tab-btn" data-category="lower">Lower</button>
+                <button class="tab-btn" data-category="cardio">Cardio</button>
+                <button class="tab-btn" data-category="custom">My Own</button>
+            </div>
 
-            <div id="exercise-checkboxes" class="exercise-grid">
-                <!-- Exercise checkboxes will be populated by JavaScript -->
+            <div id="exercise-chips" class="exercise-chips">
+                <!-- Exercise chips will be populated by JavaScript -->
             </div>
-            <div class="custom-controls">
-                <button id="select-all-exercises" class="button button-inline button-success">Select All</button>
-                <button id="clear-all-exercises" class="button button-inline button-danger">Clear All</button>
+            
+            <div class="customize-footer">
+                <div class="add-custom-inline">
+                    <input type="text" id="custom-exercise-input" placeholder="Add your own exercise..." class="custom-input">
+                    <button id="add-custom-exercise-btn" class="add-btn" title="Add Exercise">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="quick-actions">
+                    <button id="clear-all-exercises" class="quick-btn">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
             </div>
-            <div id="exercise-count" class="exercise-count">Selected: 0 exercises</div>
         </div>
 
         <div class="tts-controls">
@@ -206,7 +217,7 @@
     <audio id="music-player" crossorigin="anonymous"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=23"></script>
 
 </body>
 
