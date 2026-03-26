@@ -438,8 +438,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // Activate screen wake lock to keep screen on during workout
         await requestScreenWakeLock();
         
-        // Start voice recognition for "next round" commands
-        startVoiceRecognition();
     });
 
     // Next Round Slider
@@ -447,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const sliderFill = document.getElementById('slider-fill');
     let isSliding = false;
 
-    // Function to trigger next round (used by slider and voice command)
+    // Function to trigger next round (used by slider)
     function triggerNextRound() {
         if (isSliding) return; // Prevent double trigger
             isSliding = true;
@@ -501,224 +499,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    // Voice Recognition for "Next Round" command
-    let voiceRecognition = null;
-    let isVoiceListening = false;
-    const voiceControlBtn = document.getElementById('voice-control-btn');
-    const voiceIcon = document.getElementById('voice-icon');
-    
-    // Update voice button UI
-    function updateVoiceButtonUI() {
-        if (!voiceControlBtn) return;
-        
-        if (isVoiceListening) {
-            voiceControlBtn.classList.add('listening');
-            voiceControlBtn.classList.remove('not-supported');
-            if (voiceIcon) {
-                voiceIcon.className = 'fas fa-microphone';
-            }
-            voiceControlBtn.title = 'Voice Active - Say "Next Round"';
-        } else {
-            voiceControlBtn.classList.remove('listening');
-            if (voiceIcon) {
-                voiceIcon.className = 'fas fa-microphone-slash';
-            }
-            voiceControlBtn.title = 'Voice Off - Tap to Enable';
-        }
-    }
-    
-    function setupVoiceRecognition() {
-        // Check if Speech Recognition is supported
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            console.log('Voice recognition not supported in this browser');
-            if (voiceControlBtn) {
-                voiceControlBtn.classList.add('not-supported');
-                voiceControlBtn.title = 'Voice not supported in this browser';
-            }
-            return null;
-        }
-        
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true; // Get interim results for better responsiveness
-        recognition.lang = 'en-US';
-        recognition.maxAlternatives = 3; // Get multiple possible transcriptions
-        
-        recognition.onstart = function() {
-            console.log('🎤 Voice recognition actually started');
-            isVoiceListening = true;
-            updateVoiceButtonUI();
-        };
-        
-        recognition.onaudiostart = function() {
-            console.log('🎤 Audio capturing started');
-        };
-        
-        recognition.onsoundstart = function() {
-            console.log('🎤 Sound detected');
-        };
-        
-        recognition.onspeechstart = function() {
-            console.log('🎤 Speech detected');
-            // Flash the button to show speech is being heard
-            if (voiceControlBtn) {
-                voiceControlBtn.style.transform = 'scale(1.2)';
-                setTimeout(() => {
-                    voiceControlBtn.style.transform = 'scale(1)';
-                }, 200);
-            }
-        };
-        
-        recognition.onresult = function(event) {
-            let transcript = '';
-            let isFinal = false;
-            
-            // Get the latest result
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    isFinal = true;
-                }
-            }
-            
-            transcript = transcript.toLowerCase().trim();
-            console.log('🎤 Voice heard:', transcript, '(final:', isFinal, ')');
-            
-            // Show what was heard on the button briefly
-            if (voiceControlBtn && transcript) {
-                voiceControlBtn.title = 'Heard: "' + transcript + '"';
-            }
-            
-            // Check for "let's go" command (only on final results to avoid double triggers)
-            if (isFinal) {
-                if (transcript.includes("let's go") || 
-                    transcript.includes("lets go") ||
-                    transcript.includes("let go")) {
-                    console.log('🎤 "Let\'s go" command detected!');
-                    // Visual feedback
-                    if (voiceControlBtn) {
-                        voiceControlBtn.style.background = 'rgba(16, 185, 129, 0.8)';
-                        setTimeout(() => {
-                            voiceControlBtn.style.background = '';
-                        }, 500);
-                    }
-                    triggerNextRound();
-                }
-            }
-        };
-        
-        recognition.onerror = function(event) {
-            console.log('Voice recognition error:', event.error);
-            if (event.error === 'no-speech') {
-                console.log('🎤 No speech detected - restarting...');
-                // Restart recognition if it stopped due to no speech
-                if (isVoiceListening) {
-                    setTimeout(() => {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            console.log('Restart after no-speech error:', e);
-                        }
-                    }, 100);
-                }
-            } else if (event.error === 'aborted') {
-                console.log('🎤 Recognition aborted');
-                if (isVoiceListening) {
-                    setTimeout(() => {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            console.log('Restart after abort:', e);
-                        }
-                    }, 500);
-                }
-            } else if (event.error === 'not-allowed') {
-                // Microphone permission denied
-                isVoiceListening = false;
-                updateVoiceButtonUI();
-                console.log('🎤 Microphone permission denied');
-                alert('Microphone permission denied. Please allow microphone access for voice commands.');
-            } else if (event.error === 'network') {
-                console.log('🎤 Network error - speech recognition may need internet');
-            }
-        };
-        
-        recognition.onend = function() {
-            console.log('Voice recognition ended, isVoiceListening:', isVoiceListening);
-            // Restart if we're still supposed to be listening
-            if (isVoiceListening) {
-                setTimeout(() => {
-                    try {
-                        recognition.start();
-                        console.log('🎤 Restarted voice recognition');
-                    } catch (e) {
-                        console.log('Restart error:', e);
-                        // If it fails, try again after a longer delay
-                        setTimeout(() => {
-                            try {
-                                recognition.start();
-                            } catch (e2) {
-                                console.log('Second restart failed:', e2);
-                                isVoiceListening = false;
-                                updateVoiceButtonUI();
-                            }
-                        }, 1000);
-                    }
-                }, 100);
-            } else {
-                updateVoiceButtonUI();
-            }
-        };
-        
-        return recognition;
-    }
-    
-    function startVoiceRecognition() {
-        if (!voiceRecognition) {
-            voiceRecognition = setupVoiceRecognition();
-        }
-        if (voiceRecognition) {
-            try {
-                voiceRecognition.start();
-                isVoiceListening = true;
-                updateVoiceButtonUI();
-                console.log('🎤 Voice recognition started - say "next round" to advance');
-            } catch (e) {
-                console.log('Voice recognition start error:', e);
-                // May already be running, try to restart
-                if (e.name === 'InvalidStateError') {
-                    isVoiceListening = true;
-                    updateVoiceButtonUI();
-                }
-            }
-        }
-    }
-    
-    function stopVoiceRecognition() {
-        isVoiceListening = false;
-        if (voiceRecognition) {
-            try {
-                voiceRecognition.stop();
-                console.log('🎤 Voice recognition stopped');
-            } catch (e) {
-                console.log('Voice recognition stop error:', e);
-            }
-        }
-        updateVoiceButtonUI();
-    }
-    
-    // Toggle voice recognition on button click
-    if (voiceControlBtn) {
-        voiceControlBtn.addEventListener('click', function() {
-            if (isVoiceListening) {
-                stopVoiceRecognition();
-            } else {
-                startVoiceRecognition();
-            }
-        });
-    }
-
     // Reset slider on mouse up if not at 100%
     nextRoundSlider.addEventListener('mouseup', function () {
         if (this.value < 100) {
@@ -758,7 +538,6 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(roundTimerInterval);
         stopMusic();
         stopTTS();
-        stopVoiceRecognition(); // Stop listening for voice commands
         playCompletionSound();
         announceWorkoutComplete();
 
@@ -799,7 +578,6 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(roundTimerInterval);
         stopMusic();
         stopTTS();
-        stopVoiceRecognition(); // Stop listening for voice commands
 
         // Release screen wake lock when restarting
         releaseScreenWakeLock();
@@ -1152,37 +930,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let isAnnouncing = false;
     let announcementTimeouts = []; // Track all announcement timeouts for cleanup
 
-    // Track if we should resume voice recognition after TTS
-    let shouldResumeVoiceAfterTTS = false;
-    
-    function pauseVoiceForTTS() {
-        if (isVoiceListening && voiceRecognition) {
-            shouldResumeVoiceAfterTTS = true;
-            try {
-                voiceRecognition.stop();
-                console.log('🎤 Paused voice recognition for TTS');
-            } catch (e) {
-                console.log('Error pausing voice:', e);
-            }
-        }
-    }
-    
-    function resumeVoiceAfterTTS() {
-        if (shouldResumeVoiceAfterTTS) {
-            shouldResumeVoiceAfterTTS = false;
-            setTimeout(() => {
-                if (isVoiceListening) {
-                    try {
-                        voiceRecognition.start();
-                        console.log('🎤 Resumed voice recognition after TTS');
-                    } catch (e) {
-                        console.log('Error resuming voice:', e);
-                    }
-                }
-            }, 500); // Small delay after TTS ends
-        }
-    }
-
     function speakText(text, options = {}) {
         console.log('TTS: Attempting to speak:', text);
 
@@ -1194,17 +941,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function processSpeechQueue() {
-        // Only process if not currently speaking and queue has items
         if (isSpeaking || speechQueue.length === 0) {
-            // If queue is empty and not speaking, resume voice recognition
-            if (speechQueue.length === 0 && !isSpeaking) {
-                resumeVoiceAfterTTS();
-            }
             return;
         }
-        
-        // Pause voice recognition while speaking
-        pauseVoiceForTTS();
 
         const { text, options, resolve, reject } = speechQueue.shift();
         isSpeaking = true;
