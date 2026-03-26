@@ -1040,43 +1040,23 @@ document.addEventListener('DOMContentLoaded', function () {
     function speakWithBrowser(text, options) {
         console.log('=== BROWSER TTS CALLED ===');
         console.log('Text to speak:', text);
-        console.log('Options:', options);
 
         return new Promise((resolve, reject) => {
             if (!('speechSynthesis' in window)) {
-                console.error('❌ Browser TTS not supported');
                 reject(new Error('Browser TTS not supported'));
                 return;
             }
 
-            console.log('Speech synthesis available');
-            // Don't cancel - the queue ensures only one speech at a time
-            // Only cancel if we're explicitly stopping (handled by stopTTS)
             const utterance = new SpeechSynthesisUtterance(text);
 
-            // Store reference to current utterance for potential cleanup
-            let utteranceRef = utterance;
-
-            // Settings
             utterance.rate = options.rate || 0.95;
             utterance.pitch = options.pitch || 0;
             utterance.volume = options.volume || 1;
             utterance.lang = 'en-GB';
 
-            console.log('Utterance settings:', {
-                rate: utterance.rate,
-                pitch: utterance.pitch,
-                volume: utterance.volume,
-                lang: utterance.lang
-            });
-
-            // Voice selection logic (simplified for fallback)
             const voices = speechSynthesis.getVoices();
-            console.log('Available voices:', voices.length);
-
             const voiceSelect = document.getElementById('voice-select');
             const selectedType = voiceSelect ? voiceSelect.value : 'Female';
-            console.log('Selected voice type:', selectedType);
 
             let selectedVoice = voices.find(v =>
                 v.lang.includes('GB') &&
@@ -1089,55 +1069,45 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
-                console.log('Using voice:', selectedVoice.name);
-            } else {
-                console.warn('⚠️ No voice selected, using default');
             }
 
-            utterance.onend = () => {
-                console.log('✅ TTS completed');
-                utteranceRef = null;
-                resolve();
-            };
+            let settled = false;
 
-            utterance.onerror = (e) => {
-                console.error('❌ TTS error:', e);
-                utteranceRef = null;
-                // If interrupted, it means something else canceled it (like stopTTS)
-                // In that case, we should reject so the queue knows it didn't complete
-                if (e.error === 'interrupted') {
-                    console.log('TTS interrupted - likely by explicit stopTTS call');
-                    reject(new Error('Speech interrupted'));
-                } else {
-                    reject(e);
+            // Safety timeout: resolve after 15s max to prevent queue from freezing
+            const safetyTimer = setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    console.warn('⚠️ TTS safety timeout - onend never fired, resolving anyway');
+                    speechSynthesis.cancel();
+                    resolve();
+                }
+            }, 15000);
+
+            utterance.onend = () => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(safetyTimer);
+                    console.log('✅ TTS completed');
+                    resolve();
                 }
             };
 
-            // Check if speech synthesis is already speaking
-            // This shouldn't happen with proper queueing, but add a safety check
-            if (speechSynthesis.speaking) {
-                console.log('⚠️ Warning: Speech synthesis is already speaking (queue should prevent this)');
-                // Wait a bit and try again - queue should handle this but add safety
-                const checkInterval = setInterval(() => {
-                    if (!speechSynthesis.speaking) {
-                        clearInterval(checkInterval);
-                        console.log('Starting speech after wait...');
-                        speechSynthesis.speak(utterance);
+            utterance.onerror = (e) => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(safetyTimer);
+                    if (e.error === 'interrupted') {
+                        reject(new Error('Speech interrupted'));
+                    } else {
+                        reject(e);
                     }
-                }, 100);
+                }
+            };
 
-                // Timeout after 5 seconds to prevent infinite wait
-                setTimeout(() => {
-                    clearInterval(checkInterval);
-                    if (!speechSynthesis.speaking) {
-                        console.log('Starting speech after timeout...');
-                        speechSynthesis.speak(utterance);
-                    }
-                }, 5000);
-            } else {
-                console.log('Starting speech...');
-                speechSynthesis.speak(utterance);
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
             }
+            speechSynthesis.speak(utterance);
         });
     }
 
@@ -1242,10 +1212,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 300);
     }
 
-    function announceAllExercisesInRound() {
+    async function announceAllExercisesInRound() {
         if (!document.getElementById('tts-enabled').checked) return;
 
-        // Prevent duplicate announcements
         if (isAnnouncing) {
             console.log('TTS: Already announcing, skipping duplicate call');
             return;
@@ -1257,111 +1226,66 @@ document.addEventListener('DOMContentLoaded', function () {
         announcementTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
         announcementTimeouts = [];
 
-        // Don't stop current speech - let the queue handle it naturally
-        // This ensures each speech finishes before the next starts
+        const REP_DURATION_MS = 2630;
+        const EXERCISE_GAP_MS = 6000;
 
-        // Original BD2 timing calculations
-        const REP_DURATION_MS = 2630; // 2.63 seconds per rep (from original BD2)
-        const EXERCISE_GAP_MS = 6000; // 6 seconds between exercises (from original BD2)
+        function delay(ms) {
+            return new Promise(r => {
+                const id = setTimeout(r, ms);
+                announcementTimeouts.push(id);
+            });
+        }
 
-        // Announce all exercises in the round with proper timing
-        let cumulativeTime = 0; // Start immediately (no delay since workout start already announced)
+        await delay(1000);
 
-        selectedExercises.forEach((exercise, index) => {
+        for (let index = 0; index < selectedExercises.length; index++) {
+            if (!isAnnouncing) break;
+
+            const exercise = selectedExercises[index];
             const reps = exerciseReps[exercise];
-            const isLastExercise = index === selectedExercises.length - 1;
+            const repText = reps === 1 ? "repetition" : "repetitions";
             const isFirstExercise = index === 0;
+            const isLastExercise = index === selectedExercises.length - 1;
 
-            // Calculate exercise duration based on reps
-            const exerciseDuration = reps * REP_DURATION_MS;
+            // Show spotlight for current exercise
+            showExerciseSpotlight(exercise, reps, false);
 
-            if (isFirstExercise) {
-                // First exercise announcement with next exercise
-                const timeoutId = setTimeout(async () => {
-                    const repText = reps === 1 ? "repetition" : "repetitions";
-                    const nextExercise = selectedExercises[1];
-                    const nextReps = exerciseReps[nextExercise];
-                    const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
+            // Announce current exercise
+            let label = isFirstExercise ? 'First exercise' : isLastExercise ? 'Final exercise' : `Exercise ${index + 1}`;
+            try {
+                await speakText(`${label}: ${exercise}. Do ${reps} ${repText}.`, {
+                    rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
+                });
+            } catch (e) {
+                console.log('TTS error, continuing:', e);
+            }
 
-                    // Show spotlight for current exercise
-                    showExerciseSpotlight(exercise, reps, false);
+            // Announce next exercise preview (if not the last)
+            if (!isLastExercise) {
+                const nextExercise = selectedExercises[index + 1];
+                const nextReps = exerciseReps[nextExercise];
+                const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
 
-                    // Speak current exercise and wait
-                    await speakText(`First exercise: ${exercise}. Do ${reps} ${repText}.`, {
-                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
-                    });
-                    
-                    // Show spotlight for next exercise
-                    showExerciseSpotlight(nextExercise, nextReps, true);
-                    
-                    // Speak next exercise and wait
+                showExerciseSpotlight(nextExercise, nextReps, true);
+
+                try {
                     await speakText(`Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
                         rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
                     });
-                    
-                    // Hide spotlight
-                    hideExerciseSpotlight();
-                }, 1000);
-                announcementTimeouts.push(timeoutId);
-            } else if (!isLastExercise) {
-                // Middle exercises with next exercise
-                const timeoutId = setTimeout(async () => {
-                    const repText = reps === 1 ? "repetition" : "repetitions";
-                    const nextExercise = selectedExercises[index + 1];
-                    const nextReps = exerciseReps[nextExercise];
-                    const nextRepText = nextReps === 1 ? "repetition" : "repetitions";
-
-                    // Show spotlight for current exercise
-                    showExerciseSpotlight(exercise, reps, false);
-
-                    // Speak current exercise and wait
-                    await speakText(`Exercise ${index + 1}: ${exercise}. Do ${reps} ${repText}.`, {
-                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
-                    });
-                    
-                    // Show spotlight for next exercise
-                    showExerciseSpotlight(nextExercise, nextReps, true);
-                    
-                    // Speak next exercise and wait
-                    await speakText(`Coming up next ${nextExercise} with ${nextReps} ${nextRepText}.`, {
-                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
-                    });
-                    
-                    // Hide spotlight
-                    hideExerciseSpotlight();
-                }, cumulativeTime);
-                announcementTimeouts.push(timeoutId);
-            } else {
-                // Final exercise announcement
-                const timeoutId = setTimeout(async () => {
-                    const repText = reps === 1 ? "repetition" : "repetitions";
-                    
-                    // Show spotlight for final exercise
-                    showExerciseSpotlight(exercise, reps, false);
-                    
-                    // Speak and wait
-                    await speakText(`Final exercise: ${exercise}. Do ${reps} ${repText}.`, {
-                        rate: 0.95, pitch: 0, volume: 0.7, lang: 'en-GB'
-                    });
-                    
-                    // Hide spotlight
-                    hideExerciseSpotlight();
-                }, cumulativeTime);
-                announcementTimeouts.push(timeoutId);
+                } catch (e) {
+                    console.log('TTS error, continuing:', e);
+                }
             }
 
-            // Add time for this exercise plus gap
-            cumulativeTime += exerciseDuration + EXERCISE_GAP_MS;
+            hideExerciseSpotlight();
 
-            // Reset announcement flag after last exercise (no round complete announcement here)
-            if (isLastExercise) {
-                const timeoutId = setTimeout(() => {
-                    // Reset announcement flag after completion
-                    isAnnouncing = false;
-                }, cumulativeTime - EXERCISE_GAP_MS + 1000);
-                announcementTimeouts.push(timeoutId);
+            // Wait between exercises (simulate rep time + gap)
+            if (!isLastExercise && isAnnouncing) {
+                await delay(reps * REP_DURATION_MS + EXERCISE_GAP_MS);
             }
-        });
+        }
+
+        isAnnouncing = false;
     }
 
     function announceWorkoutComplete() {
