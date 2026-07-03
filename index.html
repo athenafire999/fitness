@@ -178,7 +178,7 @@
                         <input type="range" id="volume-slider" min="0" max="100" value="69" class="volume-slider-vertical" orient="vertical">
                     </div>
                 </div>
-                <div class="next-round-slider-container">
+                <div class="next-round-slider-container" id="next-round-slider-container">
                     <div class="slider-label">Slide to Next Round</div>
                     <div class="slider-wrapper">
                         <input type="range" id="next-round-slider" min="0" max="100" value="0" class="next-round-slider">
@@ -187,6 +187,7 @@
                         </div>
                     </div>
                 </div>
+                <button id="finish-round-button" class="button black-button next-round-button hidden">Finish Workout</button>
             </div>
 
             <button id="finish-workout-button" class="button black-button hidden">Finish Workout</button>
@@ -218,7 +219,7 @@
     <audio id="music-player" crossorigin="anonymous"></audio>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js?v=31"></script>
+    <script src="script.js?v=33"></script>
 
 </body>
 

@@ -873,6 +873,10 @@ video {
         height: 50px;
     }
 
+    .next-round-button {
+        width: 100%;
+    }
+
     .tts-controls {
         padding: 8px;
         margin-top: 6px;
@@ -996,6 +1000,10 @@ video {
     .next-round-slider::-moz-range-thumb {
         width: 32px;
         height: 32px;
+    }
+
+    .next-round-button {
+        min-width: 150px;
     }
     
     #workout-list {
@@ -2163,6 +2171,18 @@ video {
     border-radius: 4px;
     transition: width 0.1s ease;
     z-index: 1;
+}
+
+/* Finish button (round 10 only) */
+.next-round-button {
+    min-width: 200px;
+    flex: 1;
+    white-space: nowrap;
+}
+
+.next-round-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Workout Stats */

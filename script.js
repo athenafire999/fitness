@@ -426,6 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         startWorkout();
         nextRound();
+        updateRoundControls();
         document.getElementById('start-workout-button').classList.add('hidden');
         document.getElementById('active-controls').classList.remove('hidden');
         document.getElementById('regenerate-workout-button').classList.add('hidden');
@@ -440,90 +441,38 @@ document.addEventListener('DOMContentLoaded', function () {
         
     });
 
-    // Next Round Slider
     const nextRoundSlider = document.getElementById('next-round-slider');
     const sliderFill = document.getElementById('slider-fill');
+    const finishRoundButton = document.getElementById('finish-round-button');
     let isSliding = false;
+    let isRoundTransitioning = false;
 
-    // Function to trigger next round (used by slider)
-    function triggerNextRound() {
-        if (isSliding) return; // Prevent double trigger
-            isSliding = true;
+    function updateRoundControls() {
+        const sliderContainer = document.getElementById('next-round-slider-container');
+        const isLastRound = currentRound >= totalRounds;
 
-            // Stop all TTS announcements and clear pending timeouts
-            stopTTS();
+        if (sliderContainer) {
+            sliderContainer.classList.toggle('hidden', isLastRound);
+        }
+        if (finishRoundButton) {
+            finishRoundButton.classList.toggle('hidden', !isLastRound);
+            finishRoundButton.disabled = false;
+        }
 
-            // Store the completed round number before nextRound() increments it
-            const completedRound = currentRound;
-
-            // Announce the round is complete (before moving to next round)
-            if (completedRound > 0) {
-                announceRoundComplete(completedRound);
-            }
-
-            // Check if this is the last round before proceeding
-            const isLastRound = completedRound === totalRounds;
-
-            // Wait a moment, then proceed to next round
-            setTimeout(() => {
-                if (!isLastRound) {
-                    nextRound(); // Proceed to the next round (this increments currentRound)
-                    // Announce round start and then exercises (same format as first round)
-                    announceNextRound(currentRound);
-                    // Announce exercises after round start announcement
-                    setTimeout(() => {
-                        announceAllExercisesInRound();
-                    }, 2000); // 2 second delay to let round announcement finish first
-                } else {
-                    // Last round completed, show finish button
-                    document.getElementById('active-controls').classList.add('hidden');
-                    document.getElementById('finish-workout-button').classList.remove('hidden');
-                }
-            }, 1500); // 1.5 second delay to let round complete announcement finish
-
-            // Reset slider after a short delay
-            setTimeout(() => {
+        if (!isLastRound && nextRoundSlider && sliderFill) {
             nextRoundSlider.value = 0;
-                sliderFill.style.width = '0%';
-                isSliding = false;
-            }, 2000);
+            sliderFill.style.width = '0%';
+            isSliding = false;
+        }
     }
 
-    nextRoundSlider.addEventListener('input', function () {
-        const value = this.value;
-        sliderFill.style.width = value + '%';
-
-        // When slider reaches 100%, move to next round
-        if (value >= 100 && !isSliding) {
-            triggerNextRound();
-        }
-    });
-    
-    // Reset slider on mouse up if not at 100%
-    nextRoundSlider.addEventListener('mouseup', function () {
-        if (this.value < 100) {
-            this.value = 0;
-            sliderFill.style.width = '0%';
-        }
-    });
-
-    nextRoundSlider.addEventListener('touchend', function () {
-        if (this.value < 100) {
-            this.value = 0;
-            sliderFill.style.width = '0%';
-        }
-    });
-
-
-    document.getElementById('finish-workout-button').addEventListener('click', function () {
-        // Save final round's data
+    function finishWorkout() {
         if (currentRound > 0) {
             const finalRoundData = workoutStats.roundData[currentRound - 1];
             if (finalRoundData && !finalRoundData.endTime) {
                 finalRoundData.endTime = Date.now();
                 finalRoundData.duration = (finalRoundData.endTime - finalRoundData.startTime) / 1000;
 
-                // Update total reps for final round
                 Object.keys(finalRoundData.exercises).forEach(exercise => {
                     if (!workoutStats.totalExerciseReps[exercise]) {
                         workoutStats.totalExerciseReps[exercise] = 0;
@@ -540,17 +489,88 @@ document.addEventListener('DOMContentLoaded', function () {
         stopTTS();
         playCompletionSound();
         announceWorkoutComplete();
-
-        // Display workout statistics
         displayWorkoutStats();
-
-        // Release screen wake lock when workout is finished
         releaseScreenWakeLock();
+
+        document.getElementById('active-controls').classList.add('hidden');
+        document.getElementById('finish-workout-button').classList.add('hidden');
+    }
+
+    function triggerNextRound() {
+        if (isSliding || isRoundTransitioning || currentRound >= totalRounds) return;
+        isSliding = true;
+
+        stopTTS();
+
+        const completedRound = currentRound;
+        if (completedRound > 0) {
+            announceRoundComplete(completedRound);
+        }
+
+        setTimeout(() => {
+            nextRound();
+            updateRoundControls();
+            announceNextRound(currentRound);
+            setTimeout(() => {
+                announceAllExercisesInRound();
+            }, 2000);
+        }, 1500);
+
+        setTimeout(() => {
+            if (nextRoundSlider && sliderFill) {
+                nextRoundSlider.value = 0;
+                sliderFill.style.width = '0%';
+            }
+            isSliding = false;
+        }, 2000);
+    }
+
+    nextRoundSlider.addEventListener('input', function () {
+        const value = this.value;
+        sliderFill.style.width = value + '%';
+
+        if (value >= 100 && !isSliding) {
+            triggerNextRound();
+        }
     });
+
+    nextRoundSlider.addEventListener('mouseup', function () {
+        if (this.value < 100) {
+            this.value = 0;
+            sliderFill.style.width = '0%';
+        }
+    });
+
+    nextRoundSlider.addEventListener('touchend', function () {
+        if (this.value < 100) {
+            this.value = 0;
+            sliderFill.style.width = '0%';
+        }
+    });
+
+    finishRoundButton.addEventListener('click', function () {
+        if (isRoundTransitioning) return;
+        isRoundTransitioning = true;
+        finishRoundButton.disabled = true;
+
+        stopTTS();
+
+        if (currentRound > 0) {
+            announceRoundComplete(currentRound);
+        }
+
+        setTimeout(() => {
+            finishWorkout();
+        }, 1500);
+    });
+
+    document.getElementById('finish-workout-button').addEventListener('click', finishWorkout);
 
     document.getElementById('restart-workout-button').addEventListener('click', function () {
         // Reset all workout state
         currentRound = 0;
+        isRoundTransitioning = false;
+        isSliding = false;
         totalReps = 0;
         exerciseReps = {};
         selectedExercises = [];
@@ -680,6 +700,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function nextRound() {
+        if (currentRound >= totalRounds) {
+            return;
+        }
+
         // Save previous round's end time and calculate duration
         if (currentRound > 0) {
             const previousRoundData = workoutStats.roundData[currentRound - 1];
